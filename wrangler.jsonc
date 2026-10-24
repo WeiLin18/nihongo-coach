@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nihongo-coach",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nihongo-coach",
+      "database_id": "a9441205-b332-4e31-bfbd-44c9192237c9",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Optional TTS cache. Enable R2 in the dashboard, run `npx wrangler r2 bucket create nihongo-coach-audio`, then uncomment.
+  // "r2_buckets": [{ "binding": "AUDIO", "bucket_name": "nihongo-coach-audio" }],
+  "vars": {
+    "OPENAI_MODEL_FAST": "gpt-5.4-mini",
+    "OPENAI_MODEL_SMART": "gpt-5.5",
+    "AZURE_SPEECH_REGION": "japaneast",
+    "AZURE_SPEECH_VOICE": "ja-JP-NanamiNeural"
+  }
+}

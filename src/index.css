@@ -1,0 +1,10 @@
+@import 'tailwindcss';
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  background: white;
+  color: #111827;
+  font-family: system-ui, -apple-system, 'Hiragino Sans', 'PingFang TC', sans-serif;
+}
