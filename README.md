@@ -58,6 +58,24 @@ R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行
 
 iPhone Safari 打開部署網址 → 分享 → 加入主畫面。接著照 [docs/ios-shortcuts.md](docs/ios-shortcuts.md) 設定捷徑。
 
+## 電腦上用訂閱額度：`/jp` skill
+
+在電腦上用 Claude Code 時，可以用訂閱額度產生卡片，不花 API 費用，卡片一樣存進 App、手機上看得到。
+
+```bash
+ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # 安裝一次，所有專案都能用
+```
+
+在任何 Claude Code 對話裡：
+
+```
+/jp 說 可以幫我把後面打薄一點嗎 @在沙龍跟設計師說
+/jp 改 この件について確認してから返事します @會議中回答部長
+/jp 查 推し活
+```
+
+不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；token 從 `.prod.vars` 讀，不會印出來。
+
 ## API
 所有路由都要 `Authorization: Bearer <APP_TOKEN>`。
 
@@ -65,6 +83,7 @@ iPhone Safari 打開部署網址 → 分享 → 加入主畫面。接著照 [doc
 |---|---|---|
 | POST | `/api/ask` | `{ mode, text, context?, source? }` → 卡片；`?format=text` 回純文字（給捷徑用） |
 | GET | `/api/cards?category=&q=` | 卡片列表 |
+| POST | `/api/cards` | `{ mode, input, source?, draft }` 直接存一張已寫好的卡片（不呼叫 AI，給 `/jp` skill 用）；同樣支援 `?format=text` |
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |

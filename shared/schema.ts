@@ -57,6 +57,14 @@ export const CardDraft = z.object({
 })
 export type CardDraft = z.infer<typeof CardDraft>
 
+export const SaveCardRequest = z.object({
+  mode: z.enum(MODES),
+  input: z.string().trim().min(1).max(2000),
+  source: z.string().max(50).optional(),
+  draft: CardDraft,
+})
+export type SaveCardRequest = z.infer<typeof SaveCardRequest>
+
 export type WordAccent = {
   surface: string
   reading: string

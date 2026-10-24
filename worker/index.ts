@@ -4,7 +4,7 @@ import { Hono, type Context } from 'hono'
 import { bearerAuth } from 'hono/bearer-auth'
 import { HTTPException } from 'hono/http-exception'
 import { cardToText } from '../shared/format'
-import { AskRequest, type Card } from '../shared/schema'
+import { AskRequest, SaveCardRequest, type Card } from '../shared/schema'
 import { cards } from './db/schema'
 import { lookupAccents } from './lib/accent'
 import { draftCard, RefusalError } from './lib/ai'
@@ -34,6 +34,28 @@ app.onError((err, c) => {
   return c.json({ error: err.message }, 500)
 })
 
+async function saveCard(env: Env, input: SaveCardRequest): Promise<Card> {
+  const row: Row = {
+    id: crypto.randomUUID(),
+    mode: input.mode,
+    source: input.source ?? null,
+    input: input.input,
+    ja: input.draft.ja,
+    category: input.draft.category,
+    draft: input.draft,
+    wordAccents: await lookupAccents(env.DB, input.draft.words),
+    createdAt: new Date().toISOString(),
+    dueAt: null,
+    stability: null,
+    difficulty: null,
+    reps: 0,
+  }
+  await drizzle(env.DB).insert(cards).values(row)
+  return toCard(row)
+}
+
+const respond = (c: Context, card: Card) => (c.req.query('format') === 'text' ? c.text(cardToText(card)) : c.json(card))
+
 // ?format=text returns a plain-text card for iOS Shortcuts
 app.post('/ask', async (c) => {
   const parsed = AskRequest.safeParse(await c.req.json().catch(() => null))
@@ -42,25 +64,15 @@ app.post('/ask', async (c) => {
   if (!c.env.OPENAI_API_KEY) return c.json({ error: 'OPENAI_API_KEY not set' }, 501)
 
   const draft = await draftCard(c.env, req)
-  const row: Row = {
-    id: crypto.randomUUID(),
-    mode: req.mode,
-    source: req.source ?? null,
-    input: req.text,
-    ja: draft.ja,
-    category: draft.category,
-    draft,
-    wordAccents: await lookupAccents(c.env.DB, draft.words),
-    createdAt: new Date().toISOString(),
-    dueAt: null,
-    stability: null,
-    difficulty: null,
-    reps: 0,
-  }
-  await drizzle(c.env.DB).insert(cards).values(row)
+  return respond(c, await saveCard(c.env, { mode: req.mode, source: req.source, input: req.text, draft }))
+})
 
-  const card = toCard(row)
-  return c.req.query('format') === 'text' ? c.text(cardToText(card)) : c.json(card)
+// Save a card someone else already wrote (e.g. the /jp Claude Code skill on a subscription),
+// so no API call is made here. Pitch accent is still filled from the dictionary.
+app.post('/cards', async (c) => {
+  const parsed = SaveCardRequest.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  return respond(c, await saveCard(c.env, parsed.data))
 })
 
 app.get('/cards', async (c) => {
