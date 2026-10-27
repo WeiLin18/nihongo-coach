@@ -78,7 +78,26 @@ ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # 安裝一次，所有專案都能
 
 不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；token 從 `.prod.vars` 讀，不會印出來。
 
-## API
+## 手機 Claude App：MCP connector
+
+Worker 在 `/mcp/<MCP_TOKEN>` 提供一個 MCP server（Streamable HTTP，無狀態），有兩個工具：
+
+- `save_card`：Claude 照 App 的規則寫好卡片後存進來，伺服器補重音（來源標為 `claude-app`）
+- `list_cards`：讀最近存的卡片，可依分類或文字篩選
+
+claude.ai 的自訂 connector 只能填網址，所以密鑰放在路徑裡；網址錯誤一律回 404。
+
+設定（只要做一次）：
+1. `npx wrangler secret put MCP_TOKEN`（完整網址記在 `.prod.vars` 的 `MCP_URL`）
+2. 在 **claude.ai 網頁版** → 設定 → Connectors → Add custom connector，名稱填 `Nihongo Coach`，網址貼 `MCP_URL`。手機 App 不能新增 connector，但網頁加好後手機就能用。
+3. 手機 Claude App 對話時直接說「日文怎麼說：……」「幫我改：……」「查：諸々」，Claude 會呼叫 `save_card`。
+
+用 [MCP Inspector](https://github.com/modelcontextprotocol/inspector) 測試：
+
+```bash
+npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method tools/list
+```
+
 所有路由都要 `Authorization: Bearer <APP_TOKEN>`。
 
 | 方法 | 路徑 | 說明 |
