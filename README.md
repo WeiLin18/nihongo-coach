@@ -42,6 +42,7 @@ npx wrangler d1 execute nihongo-coach --local --file data/kanjium/accents.sql
 ## 部署
 
 ```bash
+cp .prod.vars.example .prod.vars             # 記下你的網址與 token（不會進 git）
 npx wrangler login
 npx wrangler d1 create nihongo-coach          # 把 database_id 貼進 wrangler.jsonc
 npm run db:migrate:remote
@@ -76,7 +77,7 @@ ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # 安裝一次，所有專案都能
 /jp 查 推し活
 ```
 
-不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；token 從 `.prod.vars` 讀，不會印出來。
+不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；網址和 token 從 `.prod.vars` 讀，token 不會印出來。
 
 ## 手機 Claude App：MCP connector
 
@@ -114,3 +115,7 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 - SRS 開口複習（`cards` 已預留 FSRS 欄位）
 - 錄自己念 → 音高曲線與示範音疊圖比對
 - 會議即時聽寫（Mac 分頁音訊 / iPhone 麥克風）
+
+## 授權
+
+程式碼採用 [MIT License](LICENSE)。重音字典資料來自 [Kanjium](https://github.com/mifunetoshiro/kanjium)，授權為 CC BY-SA 4.0，不包含在本 repo 中，需自行下載。

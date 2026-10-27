@@ -1,0 +1,7 @@
+# Copy to .prod.vars (git-ignored). Values for the deployed app, read by the /jp skill and README steps.
+APP_URL=https://nihongo-coach.<your-subdomain>.workers.dev
+# Also set with `npx wrangler secret put APP_TOKEN`
+APP_TOKEN=change-me-to-a-long-random-string
+# Also set with `npx wrangler secret put MCP_TOKEN`
+MCP_TOKEN=change-me-to-another-long-random-string
+MCP_URL=https://nihongo-coach.<your-subdomain>.workers.dev/mcp/<MCP_TOKEN>

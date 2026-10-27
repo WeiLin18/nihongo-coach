@@ -1,7 +1,7 @@
 # iOS 捷徑設定
 
 iOS 上的 PWA 不能出現在分享選單，所以「從任何 App 送出」靠捷徑（Shortcuts）App 完成。
-網址是 `https://nihongo-coach.<your-subdomain>.workers.dev`；`<APP_TOKEN>` 換成專案裡 `.prod.vars` 的 `APP_TOKEN`。
+`<APP_URL>` 換成你部署的網址（例如 `https://nihongo-coach.<你的子網域>.workers.dev`），`<APP_TOKEN>` 換成你的 token；兩者都記在專案的 `.prod.vars`。
 
 ## 1.「查日文」——分享選單（文字或截圖都可以）
 
@@ -15,7 +15,7 @@ iOS 上的 PWA 不能出現在分享選單，所以「從任何 App 送出」靠
       - **設定變數** `內容` ＝ 捷徑輸入
    3. **結束如果**
    4. **取得 URL 內容**
-      - URL：`https://nihongo-coach.<your-subdomain>.workers.dev/api/ask?format=text`
+      - URL：`<APP_URL>/api/ask?format=text`
       - 方法：`POST`
       - 標頭：`Authorization` ＝ `Bearer <APP_TOKEN>`
       - 要求本文：`JSON`
