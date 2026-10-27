@@ -12,6 +12,14 @@ Every card has **dictionary pitch-accent lines** (not guessed by AI) and **Azure
 
 The app UI and explanations are in Traditional Chinese, written for a Taiwanese learner around JLPT N2. The prompt is in [worker/lib/ai.ts](worker/lib/ai.ts) if you want to adapt it.
 
+## Demo
+
+<p align="center">
+  <img src="docs/images/demo.gif" width="320" alt="Demo: type a sentence in Say it mode and the card streams in">
+</p>
+
+<p align="center"><sub>Say it: Japanese typed in, the natural version streams in within about a second (15 s, real-time). <a href="docs/images/demo.mp4">MP4 version</a></sub></p>
+
 ## Screenshots
 
 > These screenshots use [mock data](scripts/demo-cards.json). Run them yourself with `npm run demo` (see "Demo" below).

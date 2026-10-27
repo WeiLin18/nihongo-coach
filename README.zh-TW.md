@@ -10,6 +10,14 @@
 
 每張卡都附 **字典重音高低線**（不是 AI 猜的）和 **Azure 神經語音示範音**。
 
+## 示範影片
+
+<p align="center">
+  <img src="docs/images/demo.gif" width="320" alt="示範：在「我想說」輸入句子，卡片邊產生邊顯示">
+</p>
+
+<p align="center"><sub>輸入句子後約 1 秒開始出現答案，卡片邊產生邊顯示（15 秒，實際速度）。<a href="docs/images/demo.mp4">MP4 版本</a></sub></p>
+
 ## 畫面
 
 > 以下截圖使用 [mock 資料](scripts/demo-cards.json)，可以用 `npm run demo` 自己跑起來看（見下方「Demo」）。
