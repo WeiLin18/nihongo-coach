@@ -11,7 +11,7 @@
 ## 技術
 - 前端：Vite + React + Tailwind，PWA（iPhone 可加入主畫面）
 - 後端：Hono on Cloudflare Workers，D1（SQLite, Drizzle）、R2（音檔快取）
-- AI：OpenAI API（查詞用 `OPENAI_MODEL_FAST`、中→日 / 自然化用 `OPENAI_MODEL_SMART`，在 `wrangler.jsonc` 改；`gpt-4o-transcribe` 語音轉文字）、Azure Speech（示範音）
+- AI：OpenAI API（三種模式各自的模型：`OPENAI_MODEL_LOOKUP`、`OPENAI_MODEL_ZH2JA`、`OPENAI_MODEL_NATURALIZE`，在 `wrangler.jsonc` 改；`gpt-4o-transcribe` 語音轉文字）、Azure Speech（示範音）
 
 > ChatGPT Plus / Pro 訂閱**不含** API 額度。API 要另外在 [platform.openai.com](https://platform.openai.com) 的 Billing 儲值，再到 API keys 建立 key。
 
@@ -51,6 +51,8 @@ npx wrangler secret put OPENAI_API_KEY
 npx wrangler secret put AZURE_SPEECH_KEY
 npm run deploy
 ```
+
+> ⚠️ 遠端匯入重音字典大約會寫入 32 萬列（10.8 萬筆資料＋索引），超過免費方案每天 10 萬列的寫入上限。匯入本身會完成，但當天之後的寫入（存卡片）會被擋到隔天 00:00 UTC（日本時間 09:00）。只需要匯入一次；之後一般使用每張卡片只寫入幾列。
 
 R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行 `npx wrangler r2 bucket create nihongo-coach-audio`，再把 `wrangler.jsonc` 的 `r2_buckets` 取消註解後重新部署。
 

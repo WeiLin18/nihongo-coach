@@ -19,8 +19,9 @@
   // Optional TTS cache. Enable R2 in the dashboard, run `npx wrangler r2 bucket create nihongo-coach-audio`, then uncomment.
   // "r2_buckets": [{ "binding": "AUDIO", "bucket_name": "nihongo-coach-audio" }],
   "vars": {
-    "OPENAI_MODEL_FAST": "gpt-5.4-mini",
-    "OPENAI_MODEL_SMART": "gpt-5.5",
+    "OPENAI_MODEL_LOOKUP": "gpt-5.4-mini",
+    "OPENAI_MODEL_ZH2JA": "gpt-5.5",
+    "OPENAI_MODEL_NATURALIZE": "gpt-5.5",
     "AZURE_SPEECH_REGION": "japaneast",
     "AZURE_SPEECH_VOICE": "ja-JP-NanamiNeural"
   }

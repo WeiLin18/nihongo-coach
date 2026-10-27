@@ -15,7 +15,7 @@ export function Home() {
   const [text, setText] = useState('')
   const [context, setContext] = useState('')
   const [busy, setBusy] = useState<'listening' | 'thinking' | null>(null)
-  const [card, setCard] = useState<Card | null>(null)
+  const [card, setCard] = useState<Partial<Card> | null>(null)
   const [error, setError] = useState('')
 
   async function run(input = text) {
@@ -23,7 +23,8 @@ export function Home() {
     setBusy('thinking')
     setError('')
     try {
-      setCard(await api.ask({ mode, text: input, context: context || undefined, source: 'web' }))
+      setCard(null)
+      setCard(await api.askStream({ mode, text: input, context: context || undefined, source: 'web' }, setCard))
     } catch (e) {
       setError((e as Error).message)
     } finally {

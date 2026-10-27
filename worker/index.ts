@@ -3,11 +3,12 @@ import { drizzle } from 'drizzle-orm/d1'
 import { Hono, type Context } from 'hono'
 import { bearerAuth } from 'hono/bearer-auth'
 import { HTTPException } from 'hono/http-exception'
+import { streamSSE } from 'hono/streaming'
 import { cardToText } from '../shared/format'
 import { AskRequest, SaveCardRequest, type Card } from '../shared/schema'
 import { cards } from './db/schema'
 import { lookupAccents } from './lib/accent'
-import { draftCard, RefusalError } from './lib/ai'
+import { draftCard, RefusalError, streamCard } from './lib/ai'
 import { transcribe } from './lib/transcribe'
 import { synthesize } from './lib/tts'
 
@@ -63,8 +64,26 @@ app.post('/ask', async (c) => {
   const req = parsed.data
   if (!c.env.OPENAI_API_KEY) return c.json({ error: 'OPENAI_API_KEY not set' }, 501)
 
+  const meta = { mode: req.mode, source: req.source, input: req.text }
+
+  // ?stream=1: Server-Sent Events. `delta` events carry raw JSON text as it is generated,
+  // then one `card` event with the saved card (accents filled), or an `error` event.
+  if (c.req.query('stream') === '1') {
+    return streamSSE(c, async (sse) => {
+      try {
+        const draft = await streamCard(c.env, req, (text) => sse.writeSSE({ event: 'delta', data: JSON.stringify(text) }))
+        const card = await saveCard(c.env, { ...meta, draft })
+        await sse.writeSSE({ event: 'card', data: JSON.stringify(card) })
+      } catch (err) {
+        console.error(err)
+        const message = err instanceof RefusalError ? 'AI 拒絕回答這個內容，換個說法試試' : (err as Error).message
+        await sse.writeSSE({ event: 'error', data: JSON.stringify(message) })
+      }
+    })
+  }
+
   const draft = await draftCard(c.env, req)
-  return respond(c, await saveCard(c.env, { mode: req.mode, source: req.source, input: req.text, draft }))
+  return respond(c, await saveCard(c.env, { ...meta, draft }))
 })
 
 // Save a card someone else already wrote (e.g. the /jp Claude Code skill on a subscription),

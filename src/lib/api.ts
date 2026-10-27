@@ -1,4 +1,5 @@
 import type { AskRequest, Card } from '@shared/schema'
+import { parse as parsePartialJson } from 'partial-json'
 
 const TOKEN_KEY = 'nihongo-coach-token'
 
@@ -44,6 +45,36 @@ export const api = {
     return (await request(`/cards?${qs}`)).json()
   },
   card: async (id: string): Promise<Card> => (await request(`/cards/${id}`)).json(),
+  // Streams the card as it is generated: onPartial gets the half-written card each time
+  // more JSON arrives; resolves with the saved card (accents filled) at the end.
+  askStream: async (req: AskRequest, onPartial: (card: Partial<Card>) => void): Promise<Card> => {
+    const res = await request('/ask?stream=1', json(req))
+    const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader()
+    let buffer = ''
+    let text = ''
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += value
+      let end
+      while ((end = buffer.indexOf('\n\n')) !== -1) {
+        const block = buffer.slice(0, end)
+        buffer = buffer.slice(end + 2)
+        const event = /^event: (.*)$/m.exec(block)?.[1]
+        const data = JSON.parse(/^data: (.*)$/m.exec(block)?.[1] ?? 'null')
+        if (event === 'delta') {
+          text += data
+          try {
+            onPartial(parsePartialJson(text))
+          } catch {
+            // not parseable yet; wait for more text
+          }
+        } else if (event === 'card') return data
+        else if (event === 'error') throw new Error(data)
+      }
+    }
+    throw new Error('連線中斷，請再試一次')
+  },
   deleteCard: async (id: string) => {
     await request(`/cards/${id}`, { method: 'DELETE' })
   },
