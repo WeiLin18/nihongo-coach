@@ -12,7 +12,9 @@
     "cf-typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply nihongo-coach --local",
-    "db:migrate:remote": "wrangler d1 migrations apply nihongo-coach --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply nihongo-coach --remote",
+    "demo": "DEMO=1 vite --port 5174",
+    "demo:setup": "wrangler d1 migrations apply nihongo-coach --local --persist-to .wrangler/demo && wrangler d1 execute nihongo-coach --local --persist-to .wrangler/demo --file data/kanjium/accents.sql"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",

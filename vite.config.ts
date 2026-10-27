@@ -8,7 +8,8 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    cloudflare(),
+    // DEMO=1 uses a separate local database (seeded with mock cards) for screenshots and trying the app.
+    cloudflare({ persistState: process.env.DEMO ? { path: '.wrangler/demo' } : true }),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {

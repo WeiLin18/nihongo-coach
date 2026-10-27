@@ -1,0 +1,188 @@
+[
+  {
+    "mode": "lookup",
+    "input": "エモい",
+    "source": "threads",
+    "draft": {
+      "ja": "エモい",
+      "reading": "えもい",
+      "zh": "很有感覺、讓人懷念又感動",
+      "en": "emotional; nostalgic in a good way",
+      "nuance": "年輕人口語，來自英文 emotional。看到夕陽、老照片、底片風的照片、懷舊的歌時常說「エモい」，帶有說不清楚但很觸動的感覺。朋友之間、社群上很常用，正式場合不要用。",
+      "politeness": "casual",
+      "category": "網路用語",
+      "examples": [
+        { "ja": "この写真、めっちゃエモいね。", "reading": "このしゃしん、めっちゃえもいね。", "zh": "這張照片超有感覺耶。" },
+        { "ja": "昔の曲を聴くとエモくなる。", "reading": "むかしのきょくをきくとえもくなる。", "zh": "聽到以前的歌就會很懷念。" }
+      ],
+      "words": [{ "surface": "写真", "reading": "しゃしん" }, { "surface": "昔", "reading": "むかし" }],
+      "correction": null
+    }
+  },
+  {
+    "mode": "zh2ja",
+    "input": "請問垃圾是哪一天收？",
+    "source": "web",
+    "draft": {
+      "ja": "ゴミの日っていつですか？",
+      "reading": "ごみのひっていつですか？",
+      "zh": "請問垃圾是哪一天收？",
+      "en": "Which day is garbage collection?",
+      "nuance": "日本依垃圾種類分不同收集日，「ゴミの日」就是收垃圾的日子。剛搬家時問房東、管理員或鄰居都很自然。想問特定種類可以說「燃えるゴミの日」「資源ゴミの日」。",
+      "politeness": "polite",
+      "category": "住・生活",
+      "examples": [
+        { "ja": "燃えるゴミの日は月曜と木曜です。", "reading": "もえるごみのひはげつようともくようです。", "zh": "可燃垃圾是週一和週四收。" },
+        { "ja": "ゴミは朝8時までに出してください。", "reading": "ごみはあさはちじまでにだしてください。", "zh": "垃圾請在早上八點前拿出來。" }
+      ],
+      "words": [{ "surface": "ゴミ", "reading": "ごみ" }, { "surface": "日", "reading": "ひ" }],
+      "correction": null
+    }
+  },
+  {
+    "mode": "zh2ja",
+    "input": "沒有預約也可以看診嗎？",
+    "source": "shortcut",
+    "draft": {
+      "ja": "予約なしでも診てもらえますか？",
+      "reading": "よやくなしでもみてもらえますか？",
+      "zh": "沒有預約也可以看診嗎？",
+      "en": "Can I be seen without an appointment?",
+      "nuance": "在診所櫃台或打電話時很好用。「診てもらう」是請醫生看診的自然說法，比「診察を受けられますか」口語。日本很多診所可以直接去，但先問一下比較保險。",
+      "politeness": "polite",
+      "category": "行政・醫療",
+      "examples": [
+        { "ja": "今日、予約なしでも大丈夫ですか？", "reading": "きょう、よやくなしでもだいじょうぶですか？", "zh": "今天沒預約也可以嗎？" },
+        { "ja": "どのくらい待ちますか？", "reading": "どのくらいまちますか？", "zh": "大概要等多久？" }
+      ],
+      "words": [{ "surface": "予約", "reading": "よやく" }, { "surface": "診る", "reading": "みる" }],
+      "correction": null
+    }
+  },
+  {
+    "mode": "lookup",
+    "input": "乗り換え",
+    "source": "youtube",
+    "draft": {
+      "ja": "乗り換え",
+      "reading": "のりかえ",
+      "zh": "轉乘、換車",
+      "en": "transfer (between trains)",
+      "nuance": "搭電車最常聽到的詞之一。車站廣播會說「〇〇線はお乗り換えです」。問路時可以說「どこで乗り換えればいいですか？」，比說「転乗」自然得多（日文幾乎不用「転乗」）。",
+      "politeness": "neutral",
+      "category": "交通",
+      "examples": [
+        { "ja": "新宿で山手線に乗り換えてください。", "reading": "しんじゅくでやまのてせんにのりかえてください。", "zh": "請在新宿轉山手線。" },
+        { "ja": "乗り換えが多いとちょっと疲れるね。", "reading": "のりかえがおおいとちょっとつかれるね。", "zh": "轉車次數一多就有點累。" }
+      ],
+      "words": [{ "surface": "乗り換え", "reading": "のりかえ" }],
+      "correction": null
+    }
+  },
+  {
+    "mode": "naturalize",
+    "input": "すみません、この服のもっと大きいサイズはありますか？",
+    "source": "web",
+    "draft": {
+      "ja": "すみません、これの大きいサイズってありますか？",
+      "reading": "すみません、これのおおきいさいずってありますか？",
+      "zh": "不好意思，這件有大一點的尺寸嗎？",
+      "en": "Excuse me, do you have this in a bigger size?",
+      "nuance": "拿著或指著衣服時，用「これの」比「この服の」自然；「〜ってありますか？」是店裡問庫存很常見的口語問法，禮貌也夠。",
+      "politeness": "polite",
+      "category": "購物",
+      "examples": [
+        { "ja": "これの色違いってありますか？", "reading": "これのいろちがいってありますか？", "zh": "這個有其他顏色嗎？" },
+        { "ja": "試着してもいいですか？", "reading": "しちゃくしてもいいですか？", "zh": "可以試穿嗎？" }
+      ],
+      "words": [{ "surface": "大きい", "reading": "おおきい" }, { "surface": "試着", "reading": "しちゃく" }],
+      "correction": {
+        "original": "すみません、この服のもっと大きいサイズはありますか？",
+        "why": "意思完全通，但「この服のもっと大きいサイズ」有點像照中文組出來的；實際在店裡多半指著商品說「これの〜」。"
+      }
+    }
+  },
+  {
+    "mode": "zh2ja",
+    "input": "可以不要放香菜嗎？我不太敢吃",
+    "source": "web",
+    "draft": {
+      "ja": "パクチー抜きにできますか？ちょっと苦手で。",
+      "reading": "ぱくちーぬきにできますか？ちょっとにがてで。",
+      "zh": "可以不要放香菜嗎？我不太敢吃。",
+      "en": "Could you leave out the cilantro? I'm not a fan.",
+      "nuance": "日本多半說「パクチー」而不是「香菜」。「〜抜きにできますか？」比「入れないでください」柔和；「ちょっと苦手で」表示不是過敏，只是不太能吃。",
+      "politeness": "polite",
+      "category": "食",
+      "examples": [
+        { "ja": "ネギ抜きでお願いします。", "reading": "ねぎぬきでおねがいします。", "zh": "麻煩不要放蔥。" },
+        { "ja": "辛いのがちょっと苦手で。", "reading": "からいのがちょっとにがてで。", "zh": "我不太能吃辣。" }
+      ],
+      "words": [{ "surface": "抜き", "reading": "ぬき" }, { "surface": "苦手", "reading": "にがて" }],
+      "correction": null
+    }
+  },
+  {
+    "mode": "naturalize",
+    "input": "この件について、確認してから返事します",
+    "source": "claude-code",
+    "draft": {
+      "ja": "この件は確認のうえ、改めてご連絡いたします。",
+      "reading": "このけんはかくにんのうえ、あらためてごれんらくいたします。",
+      "zh": "這件事我確認之後，再另外跟您聯絡。",
+      "en": "I'll check on this and get back to you.",
+      "nuance": "會議中回答部長、客戶時的穩妥說法。「確認のうえ」比「確認してから」更像職場用語。對同事可以輕一點：「確認して、また連絡します」。",
+      "politeness": "keigo",
+      "category": "工作・會議",
+      "examples": [
+        { "ja": "詳細を確認のうえ、本日中にご連絡いたします。", "reading": "しょうさいをかくにんのうえ、ほんじつちゅうにごれんらくいたします。", "zh": "我確認細節後，今天之內跟您聯絡。" },
+        { "ja": "担当者に確認して、改めてご連絡します。", "reading": "たんとうしゃにかくにんして、あらためてごれんらくします。", "zh": "我跟負責人確認後，再跟您聯絡。" }
+      ],
+      "words": [{ "surface": "確認", "reading": "かくにん" }, { "surface": "改めて", "reading": "あらためて" }, { "surface": "連絡", "reading": "れんらく" }],
+      "correction": {
+        "original": "この件について、確認してから返事します",
+        "why": "意思沒錯，但對部長說「返事します」偏口語，像私下聊天；職場上多用「ご連絡いたします」。口頭回答時「この件は」也比「この件について」簡潔。"
+      }
+    }
+  },
+  {
+    "mode": "lookup",
+    "input": "moro moro 會議上",
+    "source": "claude-code",
+    "draft": {
+      "ja": "諸々",
+      "reading": "もろもろ",
+      "zh": "各種事情、相關的那些事",
+      "en": "various things; all the related matters",
+      "nuance": "職場超常聽到，用來把細節一筆帶過。會議裡常聽到「諸々確認して…」「諸々よろしくお願いします」。比「いろいろ」多一點商務感，對上司說也沒問題。",
+      "politeness": "neutral",
+      "category": "工作・會議",
+      "examples": [
+        { "ja": "諸々調整して、また連絡します。", "reading": "もろもろちょうせいして、またれんらくします。", "zh": "相關的事情我協調一下，再跟你聯絡。" },
+        { "ja": "諸々ありがとうございました。", "reading": "もろもろありがとうございました。", "zh": "各方面都謝謝您了。" }
+      ],
+      "words": [{ "surface": "諸々", "reading": "もろもろ" }],
+      "correction": null
+    }
+  },
+  {
+    "mode": "zh2ja",
+    "input": "瀏海幫我剪短一點，但不要太短",
+    "source": "web",
+    "draft": {
+      "ja": "前髪、少し短くしてください。でも短くなりすぎない感じで。",
+      "reading": "まえがみ、すこしみじかくしてください。でもみじかくなりすぎないかんじで。",
+      "zh": "瀏海請幫我剪短一點，但不要剪得太短。",
+      "en": "Please cut my bangs a little shorter, but not too short.",
+      "nuance": "「〜感じで」是跟設計師溝通很好用的說法，表達「大概那種感覺」，比直接說「短くしすぎないでください」柔和。",
+      "politeness": "polite",
+      "category": "美容・沙龍",
+      "examples": [
+        { "ja": "全体的に軽い感じでお願いします。", "reading": "ぜんたいてきにかるいかんじでおねがいします。", "zh": "整體麻煩剪得輕盈一點。" },
+        { "ja": "長さはあまり変えたくないです。", "reading": "ながさはあまりかえたくないです。", "zh": "長度不太想改變。" }
+      ],
+      "words": [{ "surface": "前髪", "reading": "まえがみ" }, { "surface": "少し", "reading": "すこし" }, { "surface": "短い", "reading": "みじかい" }, { "surface": "感じ", "reading": "かんじ" }],
+      "correction": null
+    }
+  }
+]
