@@ -40,7 +40,9 @@ const json = (body: unknown): RequestInit => ({
 
 export const api = {
   ask: async (req: AskRequest): Promise<Card> => (await request('/ask', json(req))).json(),
-  cards: async (params: { category?: string; q?: string } = {}): Promise<Card[]> => {
+  cards: async (
+    params: { category?: string; q?: string; cursor?: string; limit?: string } = {},
+  ): Promise<{ cards: Card[]; nextCursor: string | null }> => {
     const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][])
     return (await request(`/cards?${qs}`)).json()
   },

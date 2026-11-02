@@ -61,7 +61,7 @@ async function callTool(env: Env, name: string, args: unknown): Promise<ToolResu
     const parsed = ListCardsArgs.safeParse(args ?? {})
     if (!parsed.success) return text(z.prettifyError(parsed.error), true)
     const { category, query, limit = 10 } = parsed.data
-    const found = await listCards(env, { category, q: query, limit })
+    const { cards: found } = await listCards(env, { category, q: query, limit })
     if (found.length === 0) return text('No cards found.')
     return text(found.map((c) => `${c.ja}（${c.reading}）— ${c.zh} #${c.category}`).join('\n'))
   }

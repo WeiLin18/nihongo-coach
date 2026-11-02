@@ -185,7 +185,7 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | Method | Path | Description |
 |---|---|---|
 | POST | `/api/ask` | `{ mode, text, context?, source? }` → card; `?format=text` returns plain text (for Shortcuts); `?stream=1` streams over SSE |
-| GET | `/api/cards?category=&q=` | List cards |
+| GET | `/api/cards?category=&q=&cursor=&limit=` | List cards, newest first: `{ cards, nextCursor }`. Pass `nextCursor` back as `cursor` for the next page (`null` on the last page); `limit` defaults to 30, max 100 |
 | POST | `/api/cards` | `{ mode, input, source?, draft }` saves an already-written card without calling the AI (used by `/jp`); also supports `?format=text` |
 | GET / DELETE | `/api/cards/:id` | One card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |

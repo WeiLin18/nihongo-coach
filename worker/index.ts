@@ -65,8 +65,9 @@ app.post('/cards', async (c) => {
 })
 
 app.get('/cards', async (c) => {
-  const { category, q } = c.req.query()
-  return c.json(await listCards(c.env, { category, q }))
+  const { category, q, cursor } = c.req.query()
+  const limit = Math.min(Math.max(Number(c.req.query('limit')) || 30, 1), 100)
+  return c.json(await listCards(c.env, { category, q, cursor, limit }))
 })
 
 app.get('/cards/:id', async (c) => {

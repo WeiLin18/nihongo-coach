@@ -180,7 +180,7 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | 方法 | 路徑 | 說明 |
 |---|---|---|
 | POST | `/api/ask` | `{ mode, text, context?, source? }` → 卡片；`?format=text` 回純文字（給捷徑用）；`?stream=1` 用 SSE 串流 |
-| GET | `/api/cards?category=&q=` | 卡片列表 |
+| GET | `/api/cards?category=&q=&cursor=&limit=` | 卡片列表，新的在前：`{ cards, nextCursor }`。把 `nextCursor` 當 `cursor` 帶回去拿下一頁（最後一頁為 `null`）；`limit` 預設 30、最多 100 |
 | POST | `/api/cards` | `{ mode, input, source?, draft }` 直接存一張已寫好的卡片（不呼叫 AI，給 `/jp` skill 用）；同樣支援 `?format=text` |
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |

@@ -1,20 +1,69 @@
 import { CATEGORIES, MODE_LABELS, type Card } from '@shared/schema'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { api } from '../lib/api'
+
+const PAGE_SIZE = 30
+
+// Which category + search a loaded list belongs to, so pages from an old search are never mixed in.
+type List = { key: string; cards: Card[]; nextCursor: string | null }
 
 export function Cards() {
   const [category, setCategory] = useState('')
   const [q, setQ] = useState('')
-  const [cards, setCards] = useState<Card[] | null>(null)
+  const [list, setList] = useState<List | null>(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const currentKey = useRef('')
+  const sentinel = useRef<HTMLDivElement>(null)
+  const key = `${category}\n${q}`
+
+  // No cursor loads the first page and replaces the list; a cursor appends the next page.
+  const fetchPage = useCallback(
+    (cursor?: string) => {
+      const key = `${category}\n${q}`
+      setLoading(true)
+      setError('')
+      api.cards({ category, q, cursor, limit: String(PAGE_SIZE) }).then(
+        (page) => {
+          if (key !== currentKey.current) return
+          setList((prev) => ({
+            key,
+            cards: cursor && prev ? [...prev.cards, ...page.cards] : page.cards,
+            nextCursor: page.nextCursor,
+          }))
+          setLoading(false)
+        },
+        (e: Error) => {
+          if (key !== currentKey.current) return
+          setError(e.message)
+          setLoading(false)
+        },
+      )
+    },
+    [category, q],
+  )
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      api.cards({ category, q }).then(setCards, (e: Error) => setError(e.message))
-    }, 250)
+    currentKey.current = `${category}\n${q}`
+    const t = setTimeout(() => fetchPage(), 250)
     return () => clearTimeout(t)
-  }, [category, q])
+  }, [category, q, fetchPage])
+
+  // Load the next page when the end of the list comes near. Observing again after each page
+  // fires at once if the sentinel is still on screen, so short pages keep loading.
+  const nextCursor = list?.key === key && !loading && !error ? list.nextCursor : null
+  useEffect(() => {
+    const el = sentinel.current
+    if (!el || !nextCursor) return
+    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && fetchPage(nextCursor), {
+      rootMargin: '400px',
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [nextCursor, fetchPage])
+
+  const cards = list?.cards
 
   return (
     <div className="space-y-3">
@@ -50,6 +99,13 @@ export function Cards() {
           </li>
         ))}
       </ul>
+      <div ref={sentinel} />
+      {loading && cards && <p className="py-4 text-center text-sm text-gray-400">載入中…</p>}
+      {error && list?.key === key && list.nextCursor && (
+        <button onClick={() => fetchPage(list.nextCursor!)} className="w-full py-3 text-sm text-gray-500">
+          重試
+        </button>
+      )}
     </div>
   )
 }
