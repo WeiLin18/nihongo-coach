@@ -178,6 +178,17 @@ Test it with [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method tools/list
 ```
 
+## Speaking review (SRS)
+
+The **複習** tab is spaced-repetition review for speaking, not recognition. Each card shows a prompt and you say the Japanese out loud before revealing the answer:
+
+- **Say it / Fix it** cards show the Chinese meaning (and what you originally wrote); you say the natural Japanese.
+- **Look up** cards show the Japanese word; you explain its meaning and use it in a sentence.
+
+Optionally tap 🎤 錄音自己說 to record yourself and play it back (stays on the device). Then reveal the full card and rate yourself 重來 / 困難 / 良好 / 簡單 (Again / Hard / Good / Easy); each button shows when the card will come back. Scheduling uses [FSRS](https://github.com/open-spaced-repetition/ts-fsrs), and every review is logged in `review_logs`.
+
+Every saved card (app, `/jp`, MCP) joins the queue automatically. Due cards come first, then up to 20 new cards a day (change it in Settings). The tab badge shows how many are left today, and the page shows today's count and your streak.
+
 ## API
 
 Every route needs `Authorization: Bearer <APP_TOKEN>`.
@@ -190,11 +201,13 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | GET / DELETE | `/api/cards/:id` | One card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
+| GET | `/api/review/queue?tz=&new=` | Today's review queue: `{ cards, stats }`, due cards first, then new cards. `tz` is the client's UTC offset in minutes (for "today"); `new` is new cards per day (default 20). Each card has `intervals` (ms until due again for ratings 1–4) |
+| GET | `/api/review/count?tz=&new=` | `{ due, new, reviewedToday, streak }` |
+| POST | `/api/review/:id?tz=&new=` | `{ rating: 1 \| 2 \| 3 \| 4 }` (Again / Hard / Good / Easy) reschedules the card; returns the updated stats |
 
 ## Next (Phase 2 / 3)
 
 - Situation packs (salon, doctor's visit, …) with a quick review before you go
-- Spaced-repetition speaking review (`cards` already has FSRS columns)
 - Record yourself → compare your pitch curve with the reference audio
 - Live meeting transcription (Mac tab audio / iPhone mic)
 

@@ -5,10 +5,11 @@ import { bearerAuth } from 'hono/bearer-auth'
 import { HTTPException } from 'hono/http-exception'
 import { streamSSE } from 'hono/streaming'
 import { cardToText } from '../shared/format'
-import { AskRequest, SaveCardRequest, type Card } from '../shared/schema'
+import { AskRequest, ReviewRequest, SaveCardRequest, type Card } from '../shared/schema'
 import { cards } from './db/schema'
 import { lookupAccents } from './lib/accent'
 import { listCards, saveCard, toCard } from './lib/cards'
+import { reviewQueue, reviewStats, submitReview } from './lib/review'
 import { mcp } from './mcp'
 import { draftCard, RefusalError, streamCard } from './lib/ai'
 import { transcribe } from './lib/transcribe'
@@ -80,6 +81,31 @@ app.get('/cards/:id', async (c) => {
 app.delete('/cards/:id', async (c) => {
   await drizzle(c.env.DB).delete(cards).where(eq(cards.id, c.req.param('id')))
   return c.body(null, 204)
+})
+
+// Spaced-repetition review. ?tz= is the client's UTC offset in minutes (for "today"),
+// ?new= the number of new cards per day (default 20).
+const reviewParams = (c: Context) => ({
+  tz: Math.min(Math.max(Number(c.req.query('tz')) || 0, -840), 840),
+  newPerDay: Math.min(Math.max(Number(c.req.query('new') ?? 20) || 0, 0), 500),
+})
+
+app.get('/review/queue', async (c) => {
+  const { tz, newPerDay } = reviewParams(c)
+  return c.json(await reviewQueue(c.env, tz, newPerDay))
+})
+
+app.get('/review/count', async (c) => {
+  const { tz, newPerDay } = reviewParams(c)
+  return c.json(await reviewStats(c.env, tz, newPerDay))
+})
+
+app.post('/review/:id', async (c) => {
+  const parsed = ReviewRequest.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  if (!(await submitReview(c.env, c.req.param('id'), parsed.data.rating))) return c.json({ error: 'not found' }, 404)
+  const { tz, newPerDay } = reviewParams(c)
+  return c.json(await reviewStats(c.env, tz, newPerDay))
 })
 
 app.post('/transcribe', async (c) => {

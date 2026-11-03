@@ -173,6 +173,17 @@ claude.ai 的自訂 connector 只能填網址，所以密鑰放在路徑裡；�
 npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method tools/list
 ```
 
+## 開口複習（SRS）
+
+**複習** 分頁是間隔重複的「開口」複習，不是看了認得就好。每張卡片先出題，自己用日文說出口，再看答案：
+
+- **我想說 / 幫我改** 的卡片：顯示中文意思（和你當初寫的），說出自然的日文。
+- **查詞** 的卡片：顯示日文單字，說出意思和用法，並用它說一句話。
+
+可以按 🎤 錄音自己說 錄下來回放（只存在這台裝置）。看答案後會顯示完整卡片，再自評 重來／困難／良好／簡單，按鈕上會顯示下次出現的間隔。排程用 [FSRS](https://github.com/open-spaced-repetition/ts-fsrs)，每次複習都記在 `review_logs`。
+
+所有存下的卡片（App、`/jp`、MCP）都會自動加入複習。先複習到期的卡片，再加入每天最多 20 張新卡片（可在設定頁調整）。分頁上的數字是今天還剩幾張，頁面上會顯示今天複習了幾張和連續天數。
+
 ## API
 
 所有路由都要 `Authorization: Bearer <APP_TOKEN>`。
@@ -185,10 +196,12 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
+| GET | `/api/review/queue?tz=&new=` | 今天的複習佇列：`{ cards, stats }`，到期的在前，接著是新卡片。`tz` 是用戶端的 UTC 時差（分鐘，用來算「今天」）；`new` 是每天新卡片數（預設 20）。每張卡片附 `intervals`（評分 1–4 各自到下次的毫秒數） |
+| GET | `/api/review/count?tz=&new=` | `{ due, new, reviewedToday, streak }` |
+| POST | `/api/review/:id?tz=&new=` | `{ rating: 1 \| 2 \| 3 \| 4 }`（重來／困難／良好／簡單）重新排程這張卡片；回傳更新後的統計 |
 
 ## 下一步（Phase 2 / 3）
 - 情境包（沙龍、看醫生…）與「出發前複習」
-- SRS 開口複習（`cards` 已預留 FSRS 欄位）
 - 錄自己念 → 音高曲線與示範音疊圖比對
 - 會議即時聽寫（Mac 分頁音訊 / iPhone 麥克風）
 

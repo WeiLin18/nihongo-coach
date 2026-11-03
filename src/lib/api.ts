@@ -1,4 +1,4 @@
-import type { AskRequest, Card } from '@shared/schema'
+import type { AskRequest, Card, ReviewQueue, ReviewRating, ReviewStats } from '@shared/schema'
 import { parse as parsePartialJson } from 'partial-json'
 
 const TOKEN_KEY = 'nihongo-coach-token'
@@ -18,6 +18,28 @@ export function setToken(token: string) {
     // private mode: token lives only for this page load
   }
 }
+
+const NEW_PER_DAY_KEY = 'nihongo-coach-new-per-day'
+
+export function getNewPerDay(): number {
+  try {
+    const n = Number(localStorage.getItem(NEW_PER_DAY_KEY))
+    return localStorage.getItem(NEW_PER_DAY_KEY) !== null && Number.isFinite(n) ? n : 20
+  } catch {
+    return 20
+  }
+}
+
+export function setNewPerDay(n: number) {
+  try {
+    localStorage.setItem(NEW_PER_DAY_KEY, String(n))
+  } catch {
+    // private mode: falls back to the default
+  }
+}
+
+// "Today" follows this device's clock; the new-card limit is a per-device setting.
+const reviewQuery = () => `tz=${-new Date().getTimezoneOffset()}&new=${getNewPerDay()}`
 
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
   const res = await fetch(`/api${path}`, {
@@ -85,5 +107,9 @@ export const api = {
     form.append('audio', audio, `speech.${audio.type.includes('mp4') ? 'mp4' : 'webm'}`)
     return (await (await request('/transcribe', { method: 'POST', body: form })).json()).text
   },
+  reviewQueue: async (): Promise<ReviewQueue> => (await request(`/review/queue?${reviewQuery()}`)).json(),
+  reviewCount: async (): Promise<ReviewStats> => (await request(`/review/count?${reviewQuery()}`)).json(),
+  review: async (id: string, rating: ReviewRating): Promise<ReviewStats> =>
+    (await request(`/review/${id}?${reviewQuery()}`, json({ rating }))).json(),
   tts: async (text: string): Promise<Blob> => (await request('/tts', json({ text }))).blob(),
 }

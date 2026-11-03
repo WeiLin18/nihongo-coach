@@ -81,3 +81,24 @@ export type Card = CardDraft & {
   wordAccents: WordAccent[]
   createdAt: string
 }
+
+// Spaced-repetition speaking review (FSRS). Ratings follow ts-fsrs: 1 Again, 2 Hard, 3 Good, 4 Easy.
+export const REVIEW_RATINGS = [1, 2, 3, 4] as const
+export type ReviewRating = (typeof REVIEW_RATINGS)[number]
+
+export const ReviewRequest = z.object({ rating: z.union(REVIEW_RATINGS.map((r) => z.literal(r))) })
+
+export type ReviewStats = {
+  due: number // learned cards due now
+  new: number // new cards still allowed today
+  reviewedToday: number
+  streak: number // consecutive days with at least one review
+}
+
+export type ReviewCard = Card & {
+  srs: { state: number; dueAt: string | null; reps: number; lapses: number }
+  // Milliseconds until the card would be due again for each rating, shown on the buttons.
+  intervals: Record<ReviewRating, number>
+}
+
+export type ReviewQueue = { cards: ReviewCard[]; stats: ReviewStats }

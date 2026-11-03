@@ -31,6 +31,12 @@ export async function saveCard(env: Env, input: SaveCardRequest): Promise<Card> 
     stability: null,
     difficulty: null,
     reps: 0,
+    lapses: 0,
+    state: 0,
+    learningSteps: 0,
+    scheduledDays: 0,
+    elapsedDays: 0,
+    lastReviewAt: null,
   }
   await drizzle(env.DB).insert(cards).values(row)
   return toCard(row)
