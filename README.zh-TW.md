@@ -7,6 +7,7 @@
 - **查詞**：看到不懂的日文 → 中文、英文、語感、例句、自動分類
 - **我想說**：說中文 → 自然的口語日文
 - **幫我改**：說日文 → 自然講法 + 為什麼原本怪怪的
+- **會話練習**：工作與生活的短情境對話，用日文回答，邊聊邊幫你改
 
 每張卡都附 **字典重音高低線**（不是 AI 猜的）和 **Azure 神經語音示範音**。
 
@@ -41,6 +42,17 @@
 - **重音不靠 AI 猜**：用 [Kanjium](https://github.com/mifunetoshiro/kanjium) 重音字典（約 10.8 萬筆）畫出 NHK 辭典式的高低線
 - **從任何 App 一鍵查詞**：iOS 捷徑放進分享選單，選取文字或截圖（自動 OCR）就能查
 - **電腦上走訂閱額度**：Claude Code 的 `/jp` skill 直接寫卡片存進 App，不花 API 費用
+
+## 會話練習
+
+「會話」分頁是短的口說練習。每題先給情境、你的角色和對方的第一句話，不會先給範例答案：你用日文回答，可以打字或按麥克風。
+
+- 每次回答後會給一個保留你原意的自然說法、難字標上讀音，並用繁體中文簡短說明改了什麼。接著對方回話，對話繼續。
+- 大約 3–4 來回，最後簡短總結，附上值得記的說法。
+- 按 **＋ 存成卡片** 會把修正存成一般的「幫我改」卡片（source `practice`），附重音，之後會出現在卡片列表與複習裡。
+- 情境混合工作（進度報告、確認規格、請人 review、排優先順序、上線討論、E2E 測試掛掉…）與生活（購物、餐廳、住處、興趣…），一週大約 4 工作 3 生活。主題會輪替，最近練過的題目會帶進 prompt 避免重複；也可以自己選「工作」或「生活」。
+
+Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangler.jsonc` 的 `OPENAI_MODEL_PRACTICE` 設定。
 
 ## 架構
 
@@ -183,6 +195,11 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | GET | `/api/cards?category=&q=&cursor=&limit=` | 卡片列表，新的在前：`{ cards, nextCursor }`。把 `nextCursor` 當 `cursor` 帶回去拿下一頁（最後一頁為 `null`）；`limit` 預設 30、最多 100 |
 | POST | `/api/cards` | `{ mode, input, source?, draft }` 直接存一張已寫好的卡片（不呼叫 AI，給 `/jp` skill 用）；同樣支援 `?format=text` |
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
+| GET | `/api/practice?limit=` | 最近的會話練習 |
+| POST | `/api/practice` | `{ kind?: "work" \| "life" }` → 開始一題；SSE 串流，最後是 `session` 事件 |
+| GET | `/api/practice/:id` | 單題與所有回合 |
+| POST | `/api/practice/:id/turns` | `{ text }` → 修正與對方下一句；SSE 串流，最後是 `turn` 事件 |
+| POST | `/api/practice/turns/:id/card` | 把該回合的修正存成卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
 

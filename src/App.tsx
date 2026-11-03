@@ -3,6 +3,7 @@ import { getToken } from './lib/api'
 import { CardDetail } from './pages/CardDetail'
 import { Cards } from './pages/Cards'
 import { Home } from './pages/Home'
+import { Practice } from './pages/Practice'
 import { Settings } from './pages/Settings'
 
 const tab = ({ isActive }: { isActive: boolean }) =>
@@ -20,6 +21,7 @@ export default function App() {
       <main className="mx-auto max-w-xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-24">
         <Routes>
           <Route path="/" element={<Start />} />
+          <Route path="/practice" element={<Practice />} />
           <Route path="/cards" element={<Cards />} />
           <Route path="/cards/:id" element={<CardDetail />} />
           <Route path="/settings" element={<Settings />} />
@@ -28,6 +30,9 @@ export default function App() {
       <nav className="fixed inset-x-0 bottom-0 flex border-t bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <NavLink to="/" end className={tab}>
           練習
+        </NavLink>
+        <NavLink to="/practice" className={tab}>
+          會話
         </NavLink>
         <NavLink to="/cards" className={tab}>
           卡片

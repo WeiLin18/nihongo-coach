@@ -7,10 +7,11 @@ A Japanese speaking coach for daily life in Japan. Japanese you don't understand
 - **Look up** (查詞): unfamiliar Japanese → meaning in Chinese and English, nuance, examples, auto category
 - **Say it** (我想說): Chinese → natural spoken Japanese
 - **Fix it** (幫我改): your Japanese → the natural way to say it, and why the original sounded off
+- **Conversation practice** (會話): short work and daily-life role-plays you answer in Japanese, corrected as you go
 
 Every card has **dictionary pitch-accent lines** (not guessed by AI) and **Azure neural-voice audio**.
 
-The app UI and explanations are in Traditional Chinese, written for a Taiwanese learner around JLPT N2. The prompt is in [worker/lib/ai.ts](worker/lib/ai.ts) if you want to adapt it.
+The app UI and explanations are in Traditional Chinese, written for a Taiwanese front-end engineer around JLPT N1. The prompt is in [worker/lib/ai.ts](worker/lib/ai.ts) if you want to adapt it.
 
 ## Demo
 
@@ -43,6 +44,17 @@ The app UI and explanations are in Traditional Chinese, written for a Taiwanese 
 - **Pitch accent is never guessed by AI**: lines are drawn NHK-dictionary style from the [Kanjium](https://github.com/mifunetoshiro/kanjium) accent data (~108k entries)
 - **One tap from any app**: an iOS Shortcut in the share sheet looks up selected text or a screenshot (with built-in OCR)
 - **Uses your subscription on the computer**: the Claude Code `/jp` skill writes the card and saves it to the app, with no API cost
+
+## Conversation practice
+
+The 會話 tab runs short spoken drills. Each one opens with a scene, your role, and the other person's first line, with no model answer: you reply in Japanese, by typing or with the mic.
+
+- After each reply you get a natural version that keeps what you meant, readings on hard words, and a short note in Traditional Chinese on what changed. Then the other person answers and the conversation moves on.
+- About 3–4 exchanges, then a short wrap-up with expressions to remember.
+- **＋ 存成卡片** turns a correction into a regular Fix it card (source `practice`), with pitch accents, so it shows up in your cards and future review.
+- Scenes mix work (progress reports, spec questions, review requests, priorities, release talks, failing E2E tests, …) and daily life (shopping, restaurants, housing, hobbies, …), about 4 work to 3 life a week. Themes rotate, and recent drills are passed to the prompt to avoid repeats. Pick 工作 or 生活 to choose yourself.
+
+Prompts are in [worker/lib/practice.ts](worker/lib/practice.ts); the model is `OPENAI_MODEL_PRACTICE` in `wrangler.jsonc`.
 
 ## Architecture
 
@@ -188,6 +200,11 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | GET | `/api/cards?category=&q=&cursor=&limit=` | List cards, newest first: `{ cards, nextCursor }`. Pass `nextCursor` back as `cursor` for the next page (`null` on the last page); `limit` defaults to 30, max 100 |
 | POST | `/api/cards` | `{ mode, input, source?, draft }` saves an already-written card without calling the AI (used by `/jp`); also supports `?format=text` |
 | GET / DELETE | `/api/cards/:id` | One card |
+| GET | `/api/practice?limit=` | Recent conversation drills |
+| POST | `/api/practice` | `{ kind?: "work" \| "life" }` → starts a drill; streams over SSE, ending with a `session` event |
+| GET | `/api/practice/:id` | One drill with its turns |
+| POST | `/api/practice/:id/turns` | `{ text }` → correction and the next line; streams over SSE, ending with a `turn` event |
+| POST | `/api/practice/turns/:id/card` | Saves that turn's correction as a card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
 

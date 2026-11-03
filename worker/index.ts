@@ -5,11 +5,12 @@ import { bearerAuth } from 'hono/bearer-auth'
 import { HTTPException } from 'hono/http-exception'
 import { streamSSE } from 'hono/streaming'
 import { cardToText } from '../shared/format'
-import { AskRequest, SaveCardRequest, type Card } from '../shared/schema'
+import { AskRequest, PracticeTurnRequest, SaveCardRequest, StartPracticeRequest, type Card } from '../shared/schema'
 import { cards } from './db/schema'
 import { lookupAccents } from './lib/accent'
 import { listCards, saveCard, toCard } from './lib/cards'
 import { mcp } from './mcp'
+import { getPractice, listPractice, replyPractice, saveTurnCard, startPractice } from './lib/practice'
 import { draftCard, RefusalError, streamCard } from './lib/ai'
 import { transcribe } from './lib/transcribe'
 import { synthesize } from './lib/tts'
@@ -25,6 +26,20 @@ app.onError((err, c) => {
   return c.json({ error: err.message }, 500)
 })
 
+// Server-Sent Events: `delta` events carry raw JSON text as the AI writes it,
+// then one `event` with the job's result, or an `error` event.
+const streamJob = <T>(c: Context, event: string, job: (onDelta: (text: string) => Promise<void>) => Promise<T>) =>
+  streamSSE(c, async (sse) => {
+    try {
+      const result = await job((text) => sse.writeSSE({ event: 'delta', data: JSON.stringify(text) }))
+      await sse.writeSSE({ event, data: JSON.stringify(result) })
+    } catch (err) {
+      console.error(err)
+      const message = err instanceof RefusalError ? 'AI 拒絕回答這個內容，換個說法試試' : (err as Error).message
+      await sse.writeSSE({ event: 'error', data: JSON.stringify(message) })
+    }
+  })
+
 const respond = (c: Context, card: Card) => (c.req.query('format') === 'text' ? c.text(cardToText(card)) : c.json(card))
 
 // ?format=text returns a plain-text card for iOS Shortcuts
@@ -36,20 +51,9 @@ app.post('/ask', async (c) => {
 
   const meta = { mode: req.mode, source: req.source, input: req.text }
 
-  // ?stream=1: Server-Sent Events. `delta` events carry raw JSON text as it is generated,
-  // then one `card` event with the saved card (accents filled), or an `error` event.
+  // ?stream=1: streams the card, ending with a `card` event with the saved card (accents filled).
   if (c.req.query('stream') === '1') {
-    return streamSSE(c, async (sse) => {
-      try {
-        const draft = await streamCard(c.env, req, (text) => sse.writeSSE({ event: 'delta', data: JSON.stringify(text) }))
-        const card = await saveCard(c.env, { ...meta, draft })
-        await sse.writeSSE({ event: 'card', data: JSON.stringify(card) })
-      } catch (err) {
-        console.error(err)
-        const message = err instanceof RefusalError ? 'AI 拒絕回答這個內容，換個說法試試' : (err as Error).message
-        await sse.writeSSE({ event: 'error', data: JSON.stringify(message) })
-      }
-    })
+    return streamJob(c, 'card', async (onDelta) => saveCard(c.env, { ...meta, draft: await streamCard(c.env, req, onDelta) }))
   }
 
   const draft = await draftCard(c.env, req)
@@ -80,6 +84,40 @@ app.get('/cards/:id', async (c) => {
 app.delete('/cards/:id', async (c) => {
   await drizzle(c.env.DB).delete(cards).where(eq(cards.id, c.req.param('id')))
   return c.body(null, 204)
+})
+
+// Conversation practice. POSTs that call the AI always stream (see streamJob).
+app.get('/practice', async (c) => {
+  const limit = Math.min(Math.max(Number(c.req.query('limit')) || 10, 1), 50)
+  return c.json(await listPractice(c.env, limit))
+})
+
+app.post('/practice', async (c) => {
+  const parsed = StartPracticeRequest.safeParse(await c.req.json().catch(() => ({})))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  if (!c.env.OPENAI_API_KEY) return c.json({ error: 'OPENAI_API_KEY not set' }, 501)
+  return streamJob(c, 'session', (onDelta) => startPractice(c.env, parsed.data.kind, onDelta))
+})
+
+app.get('/practice/:id', async (c) => {
+  const session = await getPractice(c.env, c.req.param('id'))
+  return session ? c.json(session) : c.json({ error: 'not found' }, 404)
+})
+
+app.post('/practice/:id/turns', async (c) => {
+  const parsed = PracticeTurnRequest.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  if (!c.env.OPENAI_API_KEY) return c.json({ error: 'OPENAI_API_KEY not set' }, 501)
+  const session = await getPractice(c.env, c.req.param('id'))
+  if (!session) return c.json({ error: 'not found' }, 404)
+  if (session.done) return c.json({ error: '這段會話已經結束了' }, 409)
+  return streamJob(c, 'turn', (onDelta) => replyPractice(c.env, session, parsed.data.text, onDelta))
+})
+
+app.post('/practice/turns/:id/card', async (c) => {
+  if (!c.env.OPENAI_API_KEY) return c.json({ error: 'OPENAI_API_KEY not set' }, 501)
+  const card = await saveTurnCard(c.env, c.req.param('id'))
+  return card ? c.json(card) : c.json({ error: 'not found' }, 404)
 })
 
 app.post('/transcribe', async (c) => {

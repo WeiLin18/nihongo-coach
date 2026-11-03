@@ -1,4 +1,12 @@
-import type { AskRequest, Card } from '@shared/schema'
+import type {
+  AskRequest,
+  Card,
+  PracticeKind,
+  PracticeReply,
+  PracticeScenario,
+  PracticeSession,
+  PracticeTurn,
+} from '@shared/schema'
 import { parse as parsePartialJson } from 'partial-json'
 
 const TOKEN_KEY = 'nihongo-coach-token'
@@ -49,34 +57,8 @@ export const api = {
   card: async (id: string): Promise<Card> => (await request(`/cards/${id}`)).json(),
   // Streams the card as it is generated: onPartial gets the half-written card each time
   // more JSON arrives; resolves with the saved card (accents filled) at the end.
-  askStream: async (req: AskRequest, onPartial: (card: Partial<Card>) => void): Promise<Card> => {
-    const res = await request('/ask?stream=1', json(req))
-    const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader()
-    let buffer = ''
-    let text = ''
-    for (;;) {
-      const { value, done } = await reader.read()
-      if (done) break
-      buffer += value
-      let end
-      while ((end = buffer.indexOf('\n\n')) !== -1) {
-        const block = buffer.slice(0, end)
-        buffer = buffer.slice(end + 2)
-        const event = /^event: (.*)$/m.exec(block)?.[1]
-        const data = JSON.parse(/^data: (.*)$/m.exec(block)?.[1] ?? 'null')
-        if (event === 'delta') {
-          text += data
-          try {
-            onPartial(parsePartialJson(text))
-          } catch {
-            // not parseable yet; wait for more text
-          }
-        } else if (event === 'card') return data
-        else if (event === 'error') throw new Error(data)
-      }
-    }
-    throw new Error('連線中斷，請再試一次')
-  },
+  askStream: (req: AskRequest, onPartial: (card: Partial<Card>) => void): Promise<Card> =>
+    stream('/ask?stream=1', req, 'card', onPartial),
   deleteCard: async (id: string) => {
     await request(`/cards/${id}`, { method: 'DELETE' })
   },
@@ -86,4 +68,51 @@ export const api = {
     return (await (await request('/transcribe', { method: 'POST', body: form })).json()).text
   },
   tts: async (text: string): Promise<Blob> => (await request('/tts', json({ text }))).blob(),
+
+  practiceList: async (): Promise<PracticeSummary[]> => (await request('/practice')).json(),
+  practice: async (id: string): Promise<PracticeSession> => (await request(`/practice/${id}`)).json(),
+  startPractice: (kind: PracticeKind | undefined, onPartial: (s: DeepPartial<PracticeScenario>) => void): Promise<PracticeSession> =>
+    stream('/practice', { kind }, 'session', onPartial),
+  replyPractice: (
+    id: string,
+    text: string,
+    onPartial: (r: DeepPartial<PracticeReply>) => void,
+  ): Promise<{ turn: PracticeTurn; done: boolean }> => stream(`/practice/${id}/turns`, { text }, 'turn', onPartial),
+  saveTurnCard: async (turnId: string): Promise<Card> =>
+    (await request(`/practice/turns/${turnId}/card`, { method: 'POST' })).json(),
+}
+
+export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T
+
+export type PracticeSummary = Pick<PracticeSession, 'id' | 'kind' | 'scenario' | 'done' | 'createdAt'>
+
+// Reads a streamJob response (worker/index.ts): onPartial gets the half-written JSON each time
+// more arrives; resolves with the data of the final `event`.
+async function stream<P, T>(path: string, body: unknown, event: string, onPartial: (partial: P) => void): Promise<T> {
+  const res = await request(path, json(body))
+  const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = ''
+  let text = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buffer += value
+    let end
+    while ((end = buffer.indexOf('\n\n')) !== -1) {
+      const block = buffer.slice(0, end)
+      buffer = buffer.slice(end + 2)
+      const name = /^event: (.*)$/m.exec(block)?.[1]
+      const data = JSON.parse(/^data: (.*)$/m.exec(block)?.[1] ?? 'null')
+      if (name === 'delta') {
+        text += data
+        try {
+          onPartial(parsePartialJson(text))
+        } catch {
+          // not parseable yet; wait for more text
+        }
+      } else if (name === event) return data
+      else if (name === 'error') throw new Error(data)
+    }
+  }
+  throw new Error('連線中斷，請再試一次')
 }
