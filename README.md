@@ -41,6 +41,7 @@ The app UI and explanations are in Traditional Chinese, written for a Taiwanese 
 
 - **Streams as it writes**: the answer starts appearing about 1 second after you send (OpenAI streaming)
 - **Pitch accent is never guessed by AI**: lines are drawn NHK-dictionary style from the [Kanjium](https://github.com/mifunetoshiro/kanjium) accent data (~108k entries)
+- **Check your own pitch accent**: tap 🎙 on a word in the accent section, say it, and see your pitch curve over the dictionary pattern with a verdict on where the fall should be. Analysed on the device, never uploaded ([src/lib/pitch.ts](src/lib/pitch.ts); `node scripts/check-pitch.ts` runs the checks on synthetic voices)
 - **One tap from any app**: an iOS Shortcut in the share sheet looks up selected text or a screenshot (with built-in OCR)
 - **Uses your subscription on the computer**: the Claude Code `/jp` skill writes the card and saves it to the app, with no API cost
 
@@ -195,7 +196,7 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 
 - Situation packs (salon, doctor's visit, …) with a quick review before you go
 - Spaced-repetition speaking review (`cards` already has FSRS columns)
-- Record yourself → compare your pitch curve with the reference audio
+- Overlay the reference audio's pitch curve on your recording (needs Azure TTS)
 - Live meeting transcription (Mac tab audio / iPhone mic)
 
 ## License

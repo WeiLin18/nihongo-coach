@@ -1,5 +1,6 @@
 import type { Card } from '@shared/schema'
 import { PitchAccent } from './PitchAccent'
+import { PitchPractice } from './PitchPractice'
 import { SpeakButton } from './SpeakButton'
 
 const POLITENESS = { casual: '口語・朋友', neutral: '一般', polite: '丁寧語', keigo: '敬語' }
@@ -67,7 +68,12 @@ export function CardView({ card }: { card: Partial<Card> }) {
                 <SpeakButton text={w.surface} />
               </div>
               {w.accents ? (
-                w.accents.map((n) => <PitchAccent key={n} reading={w.reading} nucleus={n} />)
+                <>
+                  {w.accents.map((n) => (
+                    <PitchAccent key={n} reading={w.reading} nucleus={n} />
+                  ))}
+                  <PitchPractice reading={w.reading} accents={w.accents} />
+                </>
               ) : (
                 <p className="text-sm text-gray-400">{w.reading}・字典查無，請以示範音為準</p>
               )}
