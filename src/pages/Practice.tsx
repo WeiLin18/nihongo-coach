@@ -1,6 +1,6 @@
 import { stripRuby } from '@shared/format'
 import { PRACTICE_KIND_LABELS, type PracticeKind, type PracticeReply, type PracticeSession, type PracticeTurn } from '@shared/schema'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Ruby } from '../components/Ruby'
 import { SpeakButton } from '../components/SpeakButton'
@@ -153,6 +153,13 @@ export function Practice() {
   const markSaved = (turnId: string) => (cardId: string) =>
     setSession((s) => s && { ...s, turns: s.turns.map((t) => (t.id === turnId ? { ...t, cardId } : t)) })
 
+  // Follow the conversation as replies stream in.
+  const end = useRef<HTMLDivElement>(null)
+  const turnCount = session?.turns.length
+  useEffect(() => {
+    if (pending || turnCount) end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' })
+  }, [pending, turnCount])
+
   const scene = session?.scenario ?? draftScene
   const wrapUp = session?.turns.at(-1)?.reply.wrapUp
 
@@ -209,6 +216,7 @@ export function Practice() {
             </div>
           )}
           {!session && <p className="animate-pulse text-xs text-gray-400">出題中…</p>}
+          <div ref={end} />
         </div>
       )}
 
@@ -223,7 +231,8 @@ export function Practice() {
       )}
 
       {session && !session.done && (
-        <div className="sticky bottom-16 space-y-2 bg-white pt-2">
+        // Sits right above the bottom nav (py-3 + text-sm + border ≈ 2.8rem).
+        <div className="sticky bottom-[calc(2.8rem+env(safe-area-inset-bottom))] space-y-2 bg-white pt-2 pb-3">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

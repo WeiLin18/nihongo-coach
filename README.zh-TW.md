@@ -52,6 +52,13 @@
 - 按 **＋ 存成卡片** 會把修正存成一般的「幫我改」卡片（source `practice`），附重音，之後會出現在卡片列表與複習裡。
 - 情境混合工作（進度報告、確認規格、請人 review、排優先順序、上線討論、E2E 測試掛掉…）與生活（購物、餐廳、住處、興趣…），一週大約 4 工作 3 生活。主題會輪替，最近練過的題目會帶進 prompt 避免重複；也可以自己選「工作」或「生活」。
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/practice.jpg" width="220" alt="會話練習：工作情境、你的角色和要回答的第一句話"><br><sub>工作情境：不先給範例，直接用日文回答</sub></td>
+    <td align="center"><img src="docs/images/practice-fix.jpg" width="220" alt="修正與中文說明，已存成卡片"><br><sub>修正、說明、存成卡片</sub></td>
+  </tr>
+</table>
+
 Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangler.jsonc` 的 `OPENAI_MODEL_PRACTICE` 設定。
 
 ## 架構

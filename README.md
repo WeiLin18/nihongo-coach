@@ -54,6 +54,13 @@ The 會話 tab runs short spoken drills. Each one opens with a scene, your role,
 - **＋ 存成卡片** turns a correction into a regular Fix it card (source `practice`), with pitch accents, so it shows up in your cards and future review.
 - Scenes mix work (progress reports, spec questions, review requests, priorities, release talks, failing E2E tests, …) and daily life (shopping, restaurants, housing, hobbies, …), about 4 work to 3 life a week. Themes rotate, and recent drills are passed to the prompt to avoid repeats. Pick 工作 or 生活 to choose yourself.
 
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/practice.jpg" width="220" alt="Conversation practice: a work scene, your role, and the first line to answer"><br><sub>A work scene: no model answer, reply in Japanese</sub></td>
+    <td align="center"><img src="docs/images/practice-fix.jpg" width="220" alt="A correction with a note in Chinese, saved as a card"><br><sub>Correction, note, and saved card</sub></td>
+  </tr>
+</table>
+
 Prompts are in [worker/lib/practice.ts](worker/lib/practice.ts); the model is `OPENAI_MODEL_PRACTICE` in `wrangler.jsonc`.
 
 ## Architecture
