@@ -23,6 +23,7 @@
     "OPENAI_MODEL_ZH2JA": "gpt-5.5",
     "OPENAI_MODEL_NATURALIZE": "gpt-5.5",
     "OPENAI_MODEL_READING": "gpt-5.5",
+    "OPENAI_MODEL_PRACTICE": "gpt-5.5",
     "AZURE_SPEECH_REGION": "japaneast",
     "AZURE_SPEECH_VOICE": "ja-JP-NanamiNeural"
   }

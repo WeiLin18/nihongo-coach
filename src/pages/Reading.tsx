@@ -38,47 +38,38 @@ function ReadingHome() {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-xl font-bold">漢字讀音練習</h1>
-        <p className="mt-1 text-sm text-gray-500">先不看假名自己唸一遍，再顯示讀音，把唸錯的字存成卡片複習。</p>
-      </header>
-
-      <div className="grid grid-cols-3 gap-1 rounded-lg bg-gray-100 p-1">
-        {[undefined, ...PASSAGE_KINDS].map((k) => (
-          <button
-            key={k ?? 'auto'}
-            onClick={() => setKind(k)}
-            className={`rounded-md py-2 text-sm ${kind === k ? 'bg-white font-semibold shadow' : 'text-gray-500'}`}
-          >
-            {k ? KIND_LABELS[k] : '輪流'}
-          </button>
-        ))}
+      <div className="flex items-center gap-2">
+        <div className="grid flex-1 grid-cols-3 gap-1 rounded-lg bg-gray-100 p-1">
+          {[undefined, ...PASSAGE_KINDS].map((k) => (
+            <button
+              key={k ?? 'auto'}
+              onClick={() => setKind(k)}
+              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-white font-semibold shadow' : 'text-gray-500'}`}
+            >
+              {k ? KIND_LABELS[k] : '輪流'}
+            </button>
+          ))}
+        </div>
+        <button onClick={generate} disabled={busy} className="h-11 rounded-lg bg-rose-500 px-4 text-sm text-white disabled:opacity-40">
+          {busy ? '出題中…' : '開始'}
+        </button>
       </div>
-
-      <button onClick={generate} disabled={busy} className="h-12 w-full rounded-lg bg-gray-900 text-white disabled:opacity-40">
-        {busy ? '產生中…（約 10–20 秒）' : '產生新段落'}
-      </button>
 
       {error && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
-      {recent.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500">最近的段落</h2>
-          <ul className="divide-y">
-            {recent.map((p) => (
-              <li key={p.id}>
-                <Link to={`/reading/${p.id}`} className="block py-3">
-                  <p className="font-medium">
-                    <span className="mr-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">{KIND_LABELS[p.kind]}</span>
-                    {p.title}
-                  </p>
-                  <p className="mt-0.5 text-sm text-gray-500">{p.topic}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <section className="space-y-2">
+        <p className="text-sm text-gray-500">
+          {busy ? '產生短文中，約 20–30 秒…' : '一段含易錯漢字的對話或新聞稿。先不看假名唸一遍，再顯示讀音，把唸錯的字存成卡片。'}
+        </p>
+        {recent.length > 0 && <h3 className="pt-2 text-sm font-semibold text-gray-500">最近的短文</h3>}
+        {recent.map((p) => (
+          <Link key={p.id} to={`/reading/${p.id}`} className="flex items-center gap-2 border-b py-2 text-sm">
+            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{KIND_LABELS[p.kind]}</span>
+            <span className="flex-1 truncate">{p.title}</span>
+            <span className="text-xs text-gray-400">{p.createdAt.slice(5, 10)}</span>
+          </Link>
+        ))}
+      </section>
     </div>
   )
 }
@@ -128,10 +119,7 @@ function PassageView({ id }: { id: string }) {
   return (
     <div className="space-y-5">
       <header>
-        <Link to="/reading" className="text-sm text-gray-500">
-          ← 讀音練習
-        </Link>
-        <h1 className="mt-1 text-xl font-bold">{passage.title}</h1>
+        <h1 className="text-xl font-bold">{passage.title}</h1>
         <p className="mt-1 text-xs text-gray-500">
           <span className="mr-2 rounded bg-gray-100 px-1.5 py-0.5">{KIND_LABELS[passage.kind]}</span>
           {passage.category}

@@ -7,6 +7,8 @@
 - **查詞**：看到不懂的日文 → 中文、英文、語感、例句、自動分類
 - **我想說**：說中文 → 自然的口語日文
 - **幫我改**：說日文 → 自然講法 + 為什麼原本怪怪的
+- **會話練習**：工作與生活的短情境對話，用日文回答，邊聊邊幫你改
+- **讀音練習**：不看假名唸一段短文，再對讀音，把唸錯的字存成卡片
 
 每張卡都附 **字典重音高低線**（不是 AI 猜的）和 **Azure 神經語音示範音**。
 
@@ -24,7 +26,7 @@
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/home.jpg" width="220" alt="練習頁：三種模式、麥克風"><br><sub>練習：選模式、打字或錄音</sub></td>
+    <td align="center"><img src="docs/images/home.jpg" width="220" alt="查詢頁：三種模式、麥克風"><br><sub>查詢：選模式、打字或錄音</sub></td>
     <td align="center"><img src="docs/images/zh2ja.jpg" width="220" alt="我想說：中文轉成自然的日文"><br><sub>我想說：中文 → 自然口語日文</sub></td>
     <td align="center"><img src="docs/images/naturalize.jpg" width="220" alt="幫我改：原句與修正理由"><br><sub>幫我改：原句哪裡不自然</sub></td>
   </tr>
@@ -42,9 +44,27 @@
 - **從任何 App 一鍵查詞**：iOS 捷徑放進分享選單，選取文字或截圖（自動 OCR）就能查
 - **電腦上走訂閱額度**：Claude Code 的 `/jp` skill 直接寫卡片存進 App，不花 API 費用
 
+## 會話練習
+
+「練習」分頁上方可以切換「會話」和「讀音」（見下一節）。「會話」是短的口說練習。每題先給情境、你的角色和對方的第一句話，不會先給範例答案：你用日文回答，可以打字或按麥克風。
+
+- 每次回答後會給一個保留你原意的自然說法、難字標上讀音，並用繁體中文簡短說明改了什麼。接著對方回話，對話繼續。
+- 大約 3–4 來回，最後簡短總結，附上值得記的說法。
+- 按 **＋ 存成卡片** 會把修正存成一般的「幫我改」卡片（source `practice`），附重音，之後會出現在卡片列表與複習裡。
+- 情境混合工作（進度報告、確認規格、請人 review、排優先順序、上線討論、E2E 測試掛掉…）與生活（購物、餐廳、住處、興趣…），一週大約 4 工作 3 生活。主題會輪替，最近練過的題目會帶進 prompt 避免重複；也可以自己選「工作」或「生活」。
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/practice.jpg" width="220" alt="會話練習：工作情境、你的角色和要回答的第一句話"><br><sub>工作情境：不先給範例，直接用日文回答</sub></td>
+    <td align="center"><img src="docs/images/practice-fix.jpg" width="220" alt="修正與中文說明，已存成卡片"><br><sub>修正、說明、存成卡片</sub></td>
+  </tr>
+</table>
+
+Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangler.jsonc` 的 `OPENAI_MODEL_PRACTICE` 設定。
+
 ## 漢字讀音練習（讀音）
 
-產生一段短文，對話和新聞稿輪流出，場景是工作（會議、上線、規格）或東京生活。內容以 N1 程度設計，刻意放進容易唸錯的字（音讀訓讀、連濁、重複・相殺・早急這類特殊讀法）。
+「練習 → 讀音」會產生一段短文，對話和新聞稿輪流出，場景是工作（會議、上線、規格）或東京生活。內容以 N1 程度設計，刻意放進容易唸錯的字（音讀訓讀、連濁、重複・相殺・早急這類特殊讀法）。
 
 1. 不看假名先大聲唸一遍。可以錄下來回放，錄音只留在手機上。
 2. 按「顯示讀音」：所有漢字詞標上假名、每句附中文翻譯，並列出容易唸錯的字（讀音、意思、為什麼容易唸錯）。
@@ -200,6 +220,11 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | GET | `/api/cards?category=&q=&cursor=&limit=` | 卡片列表，新的在前：`{ cards, nextCursor }`。把 `nextCursor` 當 `cursor` 帶回去拿下一頁（最後一頁為 `null`）；`limit` 預設 30、最多 100 |
 | POST | `/api/cards` | `{ mode, input, source?, draft }` 直接存一張已寫好的卡片（不呼叫 AI，給 `/jp` skill 用）；同樣支援 `?format=text` |
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
+| GET | `/api/practice?limit=` | 最近的會話練習 |
+| POST | `/api/practice` | `{ kind?: "work" \| "life" }` → 開始一題；SSE 串流，最後是 `session` 事件 |
+| GET | `/api/practice/:id` | 單題與所有回合 |
+| POST | `/api/practice/:id/turns` | `{ text }` → 修正與對方下一句；SSE 串流，最後是 `turn` 事件 |
+| POST | `/api/practice/turns/:id/card` | 把該回合的修正存成卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
 | GET / POST | `/api/reading` | 最近的讀音段落／`{ kind? }`（`conversation` 或 `news`，不填就輪流）→ 新段落 |

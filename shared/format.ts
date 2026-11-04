@@ -28,3 +28,6 @@ export function cardToText(card: Card): string {
     .filter((l) => l !== null)
     .join('\n')
 }
+
+// Practice lines mark readings as {漢字|かんじ}; this drops them (for TTS and prompts).
+export const stripRuby = (s: string) => s.replace(/\{([^|}]+)\|[^}]*\}/g, '$1')
