@@ -1,3 +1,4 @@
+import type { Passage, PassageKind } from '@shared/reading'
 import type { AskRequest, Card } from '@shared/schema'
 import { parse as parsePartialJson } from 'partial-json'
 
@@ -86,4 +87,10 @@ export const api = {
     return (await (await request('/transcribe', { method: 'POST', body: form })).json()).text
   },
   tts: async (text: string): Promise<Blob> => (await request('/tts', json({ text }))).blob(),
+  passages: async (): Promise<Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt'>[]> =>
+    (await request('/reading')).json(),
+  passage: async (id: string): Promise<Passage> => (await request(`/reading/${id}`)).json(),
+  newPassage: async (kind?: PassageKind): Promise<Passage> => (await request('/reading', json({ kind }))).json(),
+  saveReadingCards: async (id: string, words: number[]): Promise<Card[]> =>
+    (await request(`/reading/${id}/cards`, json({ words }))).json(),
 }

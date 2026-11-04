@@ -44,6 +44,23 @@ The app UI and explanations are in Traditional Chinese, written for a Taiwanese 
 - **One tap from any app**: an iOS Shortcut in the share sheet looks up selected text or a screenshot (with built-in OCR)
 - **Uses your subscription on the computer**: the Claude Code `/jp` skill writes the card and saves it to the app, with no API cost
 
+## Kanji reading practice (讀音)
+
+A short passage, alternating between a conversation and a news-style report, set at work (meetings, releases, specs) or in daily Tokyo life. It is written for an N1-level reader and packed with words that are easy to misread (on/kun choice, rendaku, irregular readings like 重複, 相殺, 早急).
+
+1. Read it aloud with no furigana. You can record yourself and play it back; the audio stays on the phone.
+2. Tap **顯示讀音** (show readings): every kanji word gets furigana, each sentence gets a Chinese translation, and the tricky words are listed with reading, meaning, and why they're misread.
+3. Tap the words you got wrong, in the passage or the list, and save them as cards in one tap (source `reading`, with the passage sentence as an example and dictionary pitch accent).
+
+Recent topics and words are kept in D1 so the next passage doesn't repeat them. Speech-to-text isn't used to grade, because it writes kanji back and can't tell how you read them.
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/reading.jpg" width="220" alt="A news-style passage shown without furigana"><br><sub>Read it aloud first, no furigana</sub></td>
+    <td align="center"><img src="docs/images/reading-reveal.jpg" width="220" alt="The same passage with furigana and two words marked as misread"><br><sub>Show readings, mark what you misread</sub></td>
+  </tr>
+</table>
+
 ## Architecture
 
 ```mermaid
@@ -78,7 +95,7 @@ flowchart LR
 
 - Front end: Vite + React + Tailwind, PWA (add to the iPhone home screen)
 - Back end: Hono on Cloudflare Workers, D1 (SQLite, Drizzle), R2 (audio cache)
-- AI: OpenAI API (one model per mode: `OPENAI_MODEL_LOOKUP`, `OPENAI_MODEL_ZH2JA`, `OPENAI_MODEL_NATURALIZE`, set in `wrangler.jsonc`; `gpt-4o-transcribe` for speech-to-text), Azure Speech (audio)
+- AI: OpenAI API (one model per mode: `OPENAI_MODEL_LOOKUP`, `OPENAI_MODEL_ZH2JA`, `OPENAI_MODEL_NATURALIZE`, plus `OPENAI_MODEL_READING` for reading passages, set in `wrangler.jsonc`; `gpt-4o-transcribe` for speech-to-text), Azure Speech (audio)
 
 > A ChatGPT Plus / Pro subscription does **not** include API credits. Add credit under Billing on [platform.openai.com](https://platform.openai.com), then create a key under API keys.
 
@@ -190,6 +207,9 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | GET / DELETE | `/api/cards/:id` | One card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
+| GET / POST | `/api/reading` | Recent reading passages / `{ kind? }` (`conversation` or `news`; alternates when omitted) → a new passage |
+| GET | `/api/reading/:id` | One passage |
+| POST | `/api/reading/:id/cards` | `{ words }` (indexes into the passage's `words`) → saves the misread words as cards |
 
 ## Next (Phase 2 / 3)
 

@@ -1,5 +1,6 @@
 import { index, integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import type { CardDraft, Mode, WordAccent } from '../../shared/schema'
+import type { PassageDraft, PassageKind } from '../../shared/reading'
 
 export const cards = sqliteTable(
   'cards',
@@ -31,4 +32,17 @@ export const accents = sqliteTable(
     accents: text('accents').notNull(), // e.g. "0" or "1,0"
   },
   (t) => [primaryKey({ columns: [t.surface, t.reading] }), index('accents_reading_idx').on(t.reading)],
+)
+
+// Kanji reading passages, kept so recent topics and words are not repeated.
+export const passages = sqliteTable(
+  'passages',
+  {
+    id: text('id').primaryKey(),
+    kind: text('kind').$type<PassageKind>().notNull(),
+    topic: text('topic').notNull(),
+    draft: text('draft', { mode: 'json' }).$type<PassageDraft>().notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => [index('passages_created_idx').on(t.createdAt)],
 )

@@ -42,6 +42,23 @@
 - **從任何 App 一鍵查詞**：iOS 捷徑放進分享選單，選取文字或截圖（自動 OCR）就能查
 - **電腦上走訂閱額度**：Claude Code 的 `/jp` skill 直接寫卡片存進 App，不花 API 費用
 
+## 漢字讀音練習（讀音）
+
+產生一段短文，會話和新聞稿輪流出，場景是工作（會議、上線、規格）或東京生活。內容以 N1 程度設計，刻意放進容易唸錯的字（音讀訓讀、連濁、重複・相殺・早急這類特殊讀法）。
+
+1. 不看假名先大聲唸一遍。可以錄下來回放，錄音只留在手機上。
+2. 按「顯示讀音」：所有漢字詞標上假名、每句附中文翻譯，並列出容易唸錯的字（讀音、意思、為什麼容易唸錯）。
+3. 在文中或清單點選唸錯的字，一鍵存成卡片（來源 `reading`，例句帶原文句子，重音查字典）。
+
+最近的主題和字存在 D1，下一篇不會重複。不用語音轉文字評分，因為它回傳的是漢字，看不出你怎麼唸。
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/reading.jpg" width="220" alt="沒有假名的新聞稿段落"><br><sub>先不看假名唸一遍</sub></td>
+    <td align="center"><img src="docs/images/reading-reveal.jpg" width="220" alt="同一段標上假名，兩個字標記為唸錯"><br><sub>顯示讀音，點選唸錯的字</sub></td>
+  </tr>
+</table>
+
 ## 架構
 
 ```mermaid
@@ -75,7 +92,7 @@ flowchart LR
 ## 技術
 - 前端：Vite + React + Tailwind，PWA（iPhone 可加入主畫面）
 - 後端：Hono on Cloudflare Workers，D1（SQLite, Drizzle）、R2（音檔快取）
-- AI：OpenAI API（三種模式各自的模型：`OPENAI_MODEL_LOOKUP`、`OPENAI_MODEL_ZH2JA`、`OPENAI_MODEL_NATURALIZE`，在 `wrangler.jsonc` 改；`gpt-4o-transcribe` 語音轉文字）、Azure Speech（示範音）
+- AI：OpenAI API（三種模式各自的模型：`OPENAI_MODEL_LOOKUP`、`OPENAI_MODEL_ZH2JA`、`OPENAI_MODEL_NATURALIZE`，讀音練習用 `OPENAI_MODEL_READING`，在 `wrangler.jsonc` 改；`gpt-4o-transcribe` 語音轉文字）、Azure Speech（示範音）
 
 > ChatGPT Plus / Pro 訂閱**不含** API 額度。API 要另外在 [platform.openai.com](https://platform.openai.com) 的 Billing 儲值，再到 API keys 建立 key。
 
@@ -185,6 +202,9 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text }` → mp3 |
+| GET / POST | `/api/reading` | 最近的讀音段落／`{ kind? }`（`conversation` 或 `news`，不填就輪流）→ 新段落 |
+| GET | `/api/reading/:id` | 單一段落 |
+| POST | `/api/reading/:id/cards` | `{ words }`（段落 `words` 的索引）→ 把唸錯的字存成卡片 |
 
 ## 下一步（Phase 2 / 3）
 - 情境包（沙龍、看醫生…）與「出發前複習」

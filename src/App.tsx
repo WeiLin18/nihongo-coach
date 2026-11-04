@@ -3,6 +3,7 @@ import { getToken } from './lib/api'
 import { CardDetail } from './pages/CardDetail'
 import { Cards } from './pages/Cards'
 import { Home } from './pages/Home'
+import { Reading } from './pages/Reading'
 import { Settings } from './pages/Settings'
 
 const tab = ({ isActive }: { isActive: boolean }) =>
@@ -22,12 +23,17 @@ export default function App() {
           <Route path="/" element={<Start />} />
           <Route path="/cards" element={<Cards />} />
           <Route path="/cards/:id" element={<CardDetail />} />
+          <Route path="/reading" element={<Reading />} />
+          <Route path="/reading/:id" element={<Reading />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
       <nav className="fixed inset-x-0 bottom-0 flex border-t bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <NavLink to="/" end className={tab}>
           練習
+        </NavLink>
+        <NavLink to="/reading" className={tab}>
+          讀音
         </NavLink>
         <NavLink to="/cards" className={tab}>
           卡片

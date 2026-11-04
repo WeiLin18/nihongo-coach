@@ -10,6 +10,7 @@ import { cards } from './db/schema'
 import { lookupAccents } from './lib/accent'
 import { listCards, saveCard, toCard } from './lib/cards'
 import { mcp } from './mcp'
+import { reading } from './reading'
 import { draftCard, RefusalError, streamCard } from './lib/ai'
 import { transcribe } from './lib/transcribe'
 import { synthesize } from './lib/tts'
@@ -95,6 +96,8 @@ app.post('/tts', async (c) => {
   if (!c.env.AZURE_SPEECH_KEY) return c.json({ error: 'AZURE_SPEECH_KEY not set' }, 501)
   return c.body(await synthesize(c.env, text), 200, { 'Content-Type': 'audio/mpeg' })
 })
+
+app.route('/reading', reading)
 
 // Claude app connector (MCP), outside /api: it authenticates with a secret path instead of a bearer token.
 export default new Hono<{ Bindings: Env }>().route('/', app).route('/mcp', mcp)
