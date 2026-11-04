@@ -4,7 +4,7 @@ import { CATEGORIES } from './schema'
 export const PASSAGE_KINDS = ['conversation', 'news'] as const
 export type PassageKind = (typeof PASSAGE_KINDS)[number]
 
-export const KIND_LABELS: Record<PassageKind, string> = { conversation: '會話', news: '新聞' }
+export const KIND_LABELS: Record<PassageKind, string> = { conversation: '對話', news: '新聞' }
 
 export const ReadingRequest = z.object({
   // Omitted: alternate with the previous passage.
