@@ -125,7 +125,7 @@ npm run db:migrate:local
 npm run dev
 ```
 
-打開 http://localhost:5173 ，第一次會要你輸入 `APP_TOKEN`。
+打開 http://localhost:5173 ，第一次會要你輸入 `APP_TOKEN`。之後要改，點右上角 ☰ → 設定。
 
 ### 匯入重音字典
 從 [Kanjium](https://github.com/mifunetoshiro/kanjium) 下載 `data/source_files/raw/accents.txt`，放到 `data/kanjium/accents.txt`（約 10.8 萬筆）：

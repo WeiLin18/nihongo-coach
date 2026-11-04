@@ -33,7 +33,7 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
     ...init,
     headers: { Authorization: `Bearer ${getToken()}`, ...init.headers },
   })
-  if (res.status === 401) throw new Error('Token 錯誤，請到設定頁重新輸入')
+  if (res.status === 401) throw new Error('Token 錯誤，請從右上角 ☰ → 設定 重新輸入')
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(typeof body.error === 'string' ? body.error : `請求失敗 (${res.status})`)

@@ -128,7 +128,7 @@ npm run db:migrate:local
 npm run dev
 ```
 
-Open http://localhost:5173 and enter your `APP_TOKEN` the first time.
+Open http://localhost:5173 and enter your `APP_TOKEN` the first time. To change it later, open ☰ (top right) → 設定.
 
 ### Import the accent dictionary
 

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router'
+import { AppMenu } from './components/AppMenu'
 import { getToken } from './lib/api'
 import { lastPracticeSection, PRACTICE_SECTIONS, rememberPracticeSection } from './lib/practiceSection'
 import { CardDetail } from './pages/CardDetail'
@@ -37,9 +38,6 @@ function BottomNav() {
       <NavLink to="/cards" className={tab}>
         卡片
       </NavLink>
-      <NavLink to="/settings" className={tab}>
-        設定
-      </NavLink>
     </nav>
   )
 }
@@ -48,6 +46,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <main className="mx-auto max-w-xl px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-24">
+        <AppMenu />
         <Routes>
           <Route path="/" element={<Start />} />
           <Route element={<PracticeLayout />}>
