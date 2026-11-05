@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, NavLink, Route, Routes, useLocation } from 'react-router'
 import { AppMenu } from './components/AppMenu'
-import { getToken } from './lib/api'
+import { api, getToken } from './lib/api'
 import { lastPracticeSection, PRACTICE_SECTIONS, rememberPracticeSection } from './lib/practiceSection'
 import { CardDetail } from './pages/CardDetail'
 import { Cards } from './pages/Cards'
@@ -9,6 +9,7 @@ import { Home } from './pages/Home'
 import { Practice } from './pages/Practice'
 import { PracticeLayout } from './pages/PracticeLayout'
 import { Reading } from './pages/Reading'
+import { Review, REVIEW_CHANGED } from './pages/Review'
 import { Settings } from './pages/Settings'
 
 const tab = ({ isActive }: { isActive: boolean }) =>
@@ -18,6 +19,25 @@ const tab = ({ isActive }: { isActive: boolean }) =>
 function Start() {
   useLocation()
   return getToken() ? <Home /> : <Settings />
+}
+
+// Cards to review today; refreshed on navigation and after each rating.
+function DueBadge() {
+  const { pathname } = useLocation()
+  const [due, setDue] = useState(0)
+  useEffect(() => {
+    if (!getToken()) return
+    const refresh = () => api.reviewCount().then((s) => setDue(s.due + s.new), () => {})
+    refresh()
+    window.addEventListener(REVIEW_CHANGED, refresh)
+    return () => window.removeEventListener(REVIEW_CHANGED, refresh)
+  }, [pathname])
+  if (!due) return null
+  return (
+    <span className="ml-1 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+      {due > 99 ? '99+' : due}
+    </span>
+  )
 }
 
 function BottomNav() {
@@ -34,6 +54,10 @@ function BottomNav() {
       </NavLink>
       <NavLink to={section ?? lastPracticeSection()} className={() => tab({ isActive: !!section })}>
         練習
+      </NavLink>
+      <NavLink to="/review" className={tab}>
+        複習
+        <DueBadge />
       </NavLink>
       <NavLink to="/cards" className={tab}>
         卡片
@@ -54,6 +78,7 @@ export default function App() {
             <Route path="/reading" element={<Reading />} />
             <Route path="/reading/:id" element={<Reading />} />
           </Route>
+          <Route path="/review" element={<Review />} />
           <Route path="/cards" element={<Cards />} />
           <Route path="/cards/:id" element={<CardDetail />} />
           <Route path="/settings" element={<Settings />} />
