@@ -2,17 +2,24 @@
 
 **English** | [繁體中文](README.zh-TW.md)
 
-A Japanese speaking coach for daily life in Japan. Japanese you don't understand, something you want to say but can't, or something you said that felt off: send it in and it becomes a flashcard you can review later.
+A Japanese speaking coach for daily life in Japan. Japanese you don't understand, something you want to say but can't, or something you said that felt off: send it in and it becomes a flashcard. Then practise speaking with drills, reading passages and spoken review.
 
-- **Look up** (查詞): unfamiliar Japanese → meaning in Chinese and English, nuance, examples, auto category
-- **Say it** (我想說): Chinese → natural spoken Japanese
-- **Fix it** (幫我改): your Japanese → the natural way to say it, and why the original sounded off
-- **Conversation practice** (會話): short work and daily-life role-plays you answer in Japanese, corrected as you go
-- **Kanji reading** (讀音): read a passage aloud without furigana, then check the readings and save the words you misread
+**Version 0.3.0** · [Changelog](CHANGELOG.md) · [How releases work](docs/RELEASING.md)
 
-Every card has **dictionary pitch-accent lines** (not guessed by AI) and **Azure neural-voice audio**.
+The app UI and explanations are in Traditional Chinese, written for a Taiwanese front-end engineer around JLPT N1. The prompts are in [worker/lib/ai.ts](worker/lib/ai.ts) if you want to adapt them.
 
-The app UI and explanations are in Traditional Chinese, written for a Taiwanese front-end engineer around JLPT N1. The prompt is in [worker/lib/ai.ts](worker/lib/ai.ts) if you want to adapt it.
+## The app in one minute
+
+The app is an iPhone PWA with four tabs. Settings (your token, new cards per day) are in the ☰ menu at the top right.
+
+| Tab | What you do there |
+|---|---|
+| **查詢** (Ask) | Type or say something in one of three modes. Each answer is saved as a card. **查詞** (Look up): unfamiliar Japanese → meaning, nuance, examples. **我想說** (Say it): Chinese → natural spoken Japanese. **幫我改** (Fix it): your Japanese → the natural way to say it, and why. |
+| **練習** (Practice) | Two sub-tabs. **會話** (Conversation): short work and daily-life role-plays you answer in Japanese, corrected as you go. **讀音** (Reading): read a kanji passage aloud without furigana, then reveal the readings and mark the words you misread. |
+| **複習** (Review) | Spaced-repetition review for *speaking*: see the prompt, say the Japanese out loud, then reveal the card and rate yourself. |
+| **卡片** (Cards) | All your cards by category, searchable. Every card has dictionary pitch-accent lines (not guessed by AI), neural-voice audio, and **🎙 錄音比對** to compare your own pitch with the dictionary. |
+
+Cards also come in from outside the app: an **iOS Shortcut** in the share sheet, the **`/jp` skill** in Claude Code, and an **MCP connector** for the Claude apps.
 
 ## Demo
 
@@ -24,50 +31,60 @@ The app UI and explanations are in Traditional Chinese, written for a Taiwanese 
 
 ## Screenshots
 
-> These screenshots use [mock data](scripts/demo-cards.json). Run them yourself with `npm run demo` (see "Demo" below).
+> These screenshots use [mock data](scripts/demo-cards.json) and demo mode. Run it yourself with `npm run demo` (see [Demo](#demo-mock-data) below).
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/home.jpg" width="220" alt="Look-up screen: three modes and a mic button"><br><sub>查詢 (Ask): pick a mode, type or record</sub></td>
-    <td align="center"><img src="docs/images/zh2ja.jpg" width="220" alt="Say it: Chinese turned into natural Japanese"><br><sub>Say it: Chinese → natural spoken Japanese</sub></td>
-    <td align="center"><img src="docs/images/naturalize.jpg" width="220" alt="Fix it: the original sentence and why it changed"><br><sub>Fix it: what sounded unnatural</sub></td>
+    <th colspan="4" align="left">查詢 (Ask) and 卡片 (Cards)</th>
   </tr>
   <tr>
-    <td align="center"><img src="docs/images/accent.jpg" width="220" alt="Pitch-accent lines"><br><sub>Dictionary pitch accent (heiban / atamadaka / nakadaka / odaka)</sub></td>
-    <td align="center"><img src="docs/images/cards.jpg" width="220" alt="Card list with categories"><br><sub>Cards grouped by category, searchable</sub></td>
+    <td align="center" width="25%"><img src="docs/images/home.jpg" width="180" alt="Ask screen: three modes, a text box, a situation field and a mic button"><br><sub>Pick a mode, type or record</sub></td>
+    <td align="center" width="25%"><img src="docs/images/zh2ja.jpg" width="180" alt="Say it card: Chinese turned into natural Japanese with readings and examples"><br><sub>Say it: Chinese → natural Japanese</sub></td>
+    <td align="center" width="25%"><img src="docs/images/naturalize.jpg" width="180" alt="Fix it card: the original sentence crossed out and why it changed"><br><sub>Fix it: what sounded off, and why</sub></td>
+    <td align="center" width="25%"><img src="docs/images/cards.jpg" width="180" alt="Card list with search and category filters"><br><sub>Cards by category, searchable</sub></td>
+  </tr>
+  <tr>
+    <th colspan="4" align="left">練習 (Practice): 會話 and 讀音</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/practice.jpg" width="180" alt="Conversation drill: a work scene, your role, and the first line to answer"><br><sub>會話: a scene, no model answer</sub></td>
+    <td align="center"><img src="docs/images/practice-fix.jpg" width="180" alt="Your reply, the corrected version with a note in Chinese, and the next line"><br><sub>會話: correction and note</sub></td>
+    <td align="center"><img src="docs/images/reading.jpg" width="180" alt="A news-style passage shown without furigana"><br><sub>讀音: read it aloud first</sub></td>
+    <td align="center"><img src="docs/images/reading-reveal.jpg" width="180" alt="The same passage with furigana and translations, two words marked as misread"><br><sub>讀音: reveal, mark misread words</sub></td>
+  </tr>
+  <tr>
+    <th colspan="4" align="left">複習 (Review) and pitch accent</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/review.jpg" width="180" alt="Review card front: a Chinese prompt to say in Japanese, with a record button"><br><sub>複習: say it before you look</sub></td>
+    <td align="center"><img src="docs/images/review-back.jpg" width="180" alt="Review card back: the full card and four rating buttons with the next interval"><br><sub>複習: check, then rate</sub></td>
+    <td align="center"><img src="docs/images/pitch.jpg" width="180" alt="Pitch-accent lines with a recorded pitch curve over the dictionary pattern"><br><sub>🎙 錄音比對: your pitch vs. the dictionary</sub></td>
     <td></td>
   </tr>
 </table>
 
-**Highlights**
+## Features
 
-- **Streams as it writes**: the answer starts appearing about 1 second after you send (OpenAI streaming)
-- **Pitch accent is never guessed by AI**: lines are drawn NHK-dictionary style from the [Kanjium](https://github.com/mifunetoshiro/kanjium) accent data (~108k entries)
-- **Check your own pitch accent**: tap 🎙 on a word in the accent section, say it, and see your pitch curve over the dictionary pattern with a verdict on where the fall should be. Analysed on the device, never uploaded ([src/lib/pitch.ts](src/lib/pitch.ts); `node scripts/check-pitch.ts` runs the checks on synthetic voices)
-- **One tap from any app**: an iOS Shortcut in the share sheet looks up selected text or a screenshot (with built-in OCR)
-- **Uses your subscription on the computer**: the Claude Code `/jp` skill writes the card and saves it to the app, with no API cost
+### 查詢 (Ask): make a card
 
-## Conversation practice
+- **Streams as it writes**: the answer starts appearing about 1 second after you send (OpenAI streaming).
+- **Voice or text**: tap the mic to speak instead of typing (`gpt-4o-transcribe`). Add an optional situation (「在沙龍跟設計師說」) for a better register.
+- **Auto category**: cards are filed as 食, 工作・會議, 美容・沙龍, … and searchable in 卡片.
 
-The **練習** (Practice) tab has two sections, switched at the top: **會話** for conversation drills and **讀音** for kanji reading (next section). 會話 runs short spoken drills. Each one opens with a scene, your role, and the other person's first line, with no model answer: you reply in Japanese, by typing or with the mic.
+### 練習 → 會話 (Conversation practice)
+
+Each drill opens with a scene, your role, and the other person's first line, with no model answer: you reply in Japanese, by typing or with the mic.
 
 - After each reply you get a natural version that keeps what you meant, readings on hard words, and a short note in Traditional Chinese on what changed. Then the other person answers and the conversation moves on.
 - About 3–4 exchanges, then a short wrap-up with expressions to remember.
-- **＋ 存成卡片** turns a correction into a regular Fix it card (source `practice`), with pitch accents, so it shows up in your cards and future review.
+- **＋ 存成卡片** turns a correction into a regular Fix it card (source `practice`), with pitch accents, so it shows up in your cards and in review.
 - Scenes mix work (progress reports, spec questions, review requests, priorities, release talks, failing E2E tests, …) and daily life (shopping, restaurants, housing, hobbies, …), about 4 work to 3 life a week. Themes rotate, and recent drills are passed to the prompt to avoid repeats. Pick 工作 or 生活 to choose yourself.
-
-<table>
-  <tr>
-    <td align="center"><img src="docs/images/practice.jpg" width="220" alt="Conversation practice: a work scene, your role, and the first line to answer"><br><sub>A work scene: no model answer, reply in Japanese</sub></td>
-    <td align="center"><img src="docs/images/practice-fix.jpg" width="220" alt="A correction with a note in Chinese, saved as a card"><br><sub>Correction, note, and saved card</sub></td>
-  </tr>
-</table>
 
 Prompts are in [worker/lib/practice.ts](worker/lib/practice.ts); the model is `OPENAI_MODEL_PRACTICE` in `wrangler.jsonc`.
 
-## Kanji reading practice (讀音)
+### 練習 → 讀音 (Kanji reading practice)
 
-**練習 → 讀音** gives you a short passage, alternating between a conversation and a news-style report, set at work (meetings, releases, specs) or in daily Tokyo life. It is written for an N1-level reader and packed with words that are easy to misread (on/kun choice, rendaku, irregular readings like 重複, 相殺, 早急).
+A short passage, alternating between a dialogue (對話) and a news-style report (新聞), set at work (meetings, releases, specs) or in daily Tokyo life. It is written for an N1-level reader and packed with words that are easy to misread (on/kun choice, rendaku, irregular readings like 重複, 相殺, 早急).
 
 1. Read it aloud with no furigana. You can record yourself and play it back; the audio stays on the phone.
 2. Tap **顯示讀音** (show readings): every kanji word gets furigana, each sentence gets a Chinese translation, and the tricky words are listed with reading, meaning, and why they're misread.
@@ -75,12 +92,28 @@ Prompts are in [worker/lib/practice.ts](worker/lib/practice.ts); the model is `O
 
 Recent topics and words are kept in D1 so the next passage doesn't repeat them. Speech-to-text isn't used to grade, because it writes kanji back and can't tell how you read them.
 
-<table>
-  <tr>
-    <td align="center"><img src="docs/images/reading.jpg" width="220" alt="A news-style passage shown without furigana"><br><sub>Read it aloud first, no furigana</sub></td>
-    <td align="center"><img src="docs/images/reading-reveal.jpg" width="220" alt="The same passage with furigana and two words marked as misread"><br><sub>Show readings, mark what you misread</sub></td>
-  </tr>
-</table>
+### 複習 (Speaking review, SRS)
+
+Spaced-repetition review for speaking, not recognition. Each card shows a prompt and you say the Japanese out loud before revealing the answer:
+
+- **Say it / Fix it** cards show the Chinese meaning (and what you originally wrote); you say the natural Japanese.
+- **Look up** cards show the Japanese word; you explain its meaning and use it in a sentence.
+
+Optionally tap 🎤 錄音自己說 to record yourself and play it back (stays on the device). Then reveal the full card and rate yourself 重來 / 困難 / 良好 / 簡單 (Again / Hard / Good / Easy); each button shows when the card will come back. Scheduling uses [FSRS](https://github.com/open-spaced-repetition/ts-fsrs), and every review is logged in `review_logs`.
+
+Every saved card (app, `/jp`, MCP) joins the queue automatically. Due cards come first, then up to 20 new cards a day (change it in ☰ → 設定). The tab badge shows how many are left today, and the page shows today's count and your streak.
+
+### 卡片 (Cards): pitch accent and 🎙 錄音比對
+
+- **Pitch accent is never guessed by AI**: lines are drawn NHK-dictionary style from the [Kanjium](https://github.com/mifunetoshiro/kanjium) accent data (~108k entries).
+- **Check your own pitch accent**: tap 🎙 錄音比對 on a word in the accent section, say it, and see your pitch curve over the dictionary pattern with a verdict on where the fall should be. Tick **＋が** to say it with が, which is how you tell heiban from odaka. Analysed on the device, never uploaded ([src/lib/pitch.ts](src/lib/pitch.ts); `node scripts/check-pitch.ts` runs the checks on synthetic voices).
+- **Neural-voice audio** on the sentence, every example and every word (Azure Speech, cached in R2 if you enable it).
+
+### Other ways in
+
+- **One tap from any app**: an iOS Shortcut in the share sheet looks up selected text or a screenshot (with built-in OCR). See [docs/ios-shortcuts.md](docs/ios-shortcuts.md).
+- **Uses your subscription on the computer**: the Claude Code [`/jp` skill](#use-your-subscription-on-the-computer-the-jp-skill) writes the card and saves it to the app, with no API cost.
+- **Claude mobile app**: an [MCP connector](#claude-mobile-app-mcp-connector) lets Claude save cards from any conversation.
 
 ## Architecture
 
@@ -116,7 +149,7 @@ flowchart LR
 
 - Front end: Vite + React + Tailwind, PWA (add to the iPhone home screen)
 - Back end: Hono on Cloudflare Workers, D1 (SQLite, Drizzle), R2 (audio cache)
-- AI: OpenAI API (one model per mode: `OPENAI_MODEL_LOOKUP`, `OPENAI_MODEL_ZH2JA`, `OPENAI_MODEL_NATURALIZE`, plus `OPENAI_MODEL_READING` for reading passages, set in `wrangler.jsonc`; `gpt-4o-transcribe` for speech-to-text), Azure Speech (audio)
+- AI: OpenAI API (one model per mode: `OPENAI_MODEL_LOOKUP`, `OPENAI_MODEL_ZH2JA`, `OPENAI_MODEL_NATURALIZE`, plus `OPENAI_MODEL_PRACTICE` for conversation drills and `OPENAI_MODEL_READING` for reading passages, set in `wrangler.jsonc`; `gpt-4o-transcribe` for speech-to-text), Azure Speech (audio)
 
 > A ChatGPT Plus / Pro subscription does **not** include API credits. Add credit under Billing on [platform.openai.com](https://platform.openai.com), then create a key under API keys.
 
@@ -175,6 +208,8 @@ R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wr
 
 > After you change `database_id`, local dev uses a new empty database; run `npm run db:migrate:local` and the accent import again.
 
+To update an existing deployment (back up D1, apply new migrations, deploy from a tag), follow [docs/RELEASING.md](docs/RELEASING.md).
+
 On the iPhone, open the deployed URL in Safari → Share → Add to Home Screen. Then set up the shortcuts in [docs/ios-shortcuts.md](docs/ios-shortcuts.md) (written in Chinese).
 
 ## Use your subscription on the computer: the `/jp` skill
@@ -216,17 +251,6 @@ Test it with [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method tools/list
 ```
 
-## Speaking review (SRS)
-
-The **複習** tab is spaced-repetition review for speaking, not recognition. Each card shows a prompt and you say the Japanese out loud before revealing the answer:
-
-- **Say it / Fix it** cards show the Chinese meaning (and what you originally wrote); you say the natural Japanese.
-- **Look up** cards show the Japanese word; you explain its meaning and use it in a sentence.
-
-Optionally tap 🎤 錄音自己說 to record yourself and play it back (stays on the device). Then reveal the full card and rate yourself 重來 / 困難 / 良好 / 簡單 (Again / Hard / Good / Easy); each button shows when the card will come back. Scheduling uses [FSRS](https://github.com/open-spaced-repetition/ts-fsrs), and every review is logged in `review_logs`.
-
-Every saved card (app, `/jp`, MCP) joins the queue automatically. Due cards come first, then up to 20 new cards a day (change it in Settings). The tab badge shows how many are left today, and the page shows today's count and your streak.
-
 ## API
 
 Every route needs `Authorization: Bearer <APP_TOKEN>`.
@@ -256,6 +280,10 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 - Situation packs (salon, doctor's visit, …) with a quick review before you go
 - Overlay the reference audio's pitch curve on your recording (needs Azure TTS)
 - Live meeting transcription (Mac tab audio / iPhone mic)
+
+## Version history
+
+Releases are listed in [CHANGELOG.md](CHANGELOG.md): 0.1.0 (Phase 1 MVP), 0.2.0 (streaming, `/jp`, MCP, demo mode, public release), 0.3.0 (practice, reading, review, pitch recording). [docs/RELEASING.md](docs/RELEASING.md) describes how a release is tagged and deployed, including the D1 backup and migration steps.
 
 ## License
 
