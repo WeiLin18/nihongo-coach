@@ -53,15 +53,24 @@ export function setNewPerDay(n: number) {
 // "Today" follows this device's clock; the new-card limit is a per-device setting.
 const reviewQuery = () => `tz=${-new Date().getTimezoneOffset()}&new=${getNewPerDay()}`
 
+// Carries the HTTP status so callers can tell "not configured" (501) from other failures.
+export class ApiError extends Error {
+  readonly status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
   const res = await fetch(`/api${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${getToken()}`, ...init.headers },
   })
-  if (res.status === 401) throw new Error('Token 錯誤，請從右上角 ☰ → 設定 重新輸入')
+  if (res.status === 401) throw new ApiError('Token 錯誤，請從右上角 ☰ → 設定 重新輸入', 401)
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(typeof body.error === 'string' ? body.error : `請求失敗 (${res.status})`)
+    throw new ApiError(typeof body.error === 'string' ? body.error : `請求失敗 (${res.status})`, res.status)
   }
   return res
 }
