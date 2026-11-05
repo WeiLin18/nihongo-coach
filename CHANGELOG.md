@@ -6,6 +6,8 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-05
+
 ### Added
 
 - **Automated releases**: CI on every pull request and on `main` (lint, type check, build, pitch check, and a new migration-numbering check, `npm run check` locally). `npm run release -- <patch|minor|major>` bumps the version, moves these notes under a dated heading, commits, tags and pushes after a prompt. Pushing a `vX.Y.Z` tag creates the GitHub Release and, after approval on the `production` environment, applies remote D1 migrations and deploys. `npm run backup` exports the remote database to the git-ignored `backups/`. See [docs/RELEASING.md](docs/RELEASING.md).
@@ -81,7 +83,8 @@ Phase 1 MVP. Commit `a548a9f`.
 - iOS Shortcuts for the share sheet and screenshots (`docs/ios-shortcuts.md`).
 - Vite + React PWA and a Hono API on Cloudflare Workers with D1 (migration `0000_init`).
 
-[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/WeiLin18/nihongo-coach/releases/tag/v0.1.0
