@@ -11,7 +11,7 @@
 > 5. 修舊版用 `release/x.y` 分支，在上面跑 `npm run release -- patch`。比線上版本舊的 tag 只會建立 Release，不會部署。
 > 6. 回滾：Worker 用 `npx wrangler rollback`；migration 只往前，不回滾，要修就加新的 migration，真的壞資料才用 Time Travel 還原。
 > 7. D1 免費方案每天最多寫入 10 萬列，大量匯入不要和發版同一天。
-> 8. 第一次使用前要在 GitHub 和 Cloudflare 做一次設定，見最後的 [One-time setup](#one-time-setup)。
+> 8. 第一次使用前要建一個 Cloudflare API token，並在 GitHub 設兩個 secret，見最後的 [One-time setup](#one-time-setup)。
 
 This is a solo project, so the flow is small: one long-lived branch (`main`), a tag per release, and a GitHub Actions workflow that deploys the tag.
 
@@ -192,31 +192,23 @@ git switch main
 
 ## One-time setup
 
-Do this once before the first automated release. Environments with approval rules need the repo to be **public** (on a free GitHub plan, a private repo can't use environment protection rules). Make the repo public first, or see the note at the end.
+Already done in the repo settings: the `production` environment, with you as the required reviewer and only `v*.*.*` tags allowed to deploy.
 
-### Cloudflare: API token
+What is left is two secrets on that environment:
 
-1. Cloudflare dashboard → **My Profile → API Tokens → Create Token → Create Custom Token**.
-2. Name: `nihongo-coach GitHub deploy`.
-3. Permissions (all **Account** scope):
-   - **Workers Scripts → Edit** (deploy the Worker and its assets)
-   - **D1 → Edit** (migrations and Time Travel info)
-4. Account resources: **Include → your account** only.
-5. Optional: set a TTL (expiry date) and rotate the token when it expires. Leave the client IP filter empty; GitHub-hosted runners have no fixed IPs.
-6. Create it and copy the token once.
-7. Copy your **Account ID** from the dashboard (Workers & Pages → right-hand side, or the URL).
+1. **Cloudflare API token.** Cloudflare dashboard → **My Profile → API Tokens → Create Token → Create Custom Token**. Give it two **Account** permissions, **Workers Scripts → Edit** and **D1 → Edit**, and under Account resources include only your account. Copy the token.
+2. **Store both secrets.** Each command asks for the value, so it never lands in your shell history:
 
-If the first deploy fails with an authentication error that mentions memberships or user details, add **Account → Account Settings → Read** to the token. Keep the token out of `.prod.vars` and the repo.
+   ```bash
+   gh secret set CLOUDFLARE_API_TOKEN --env production -R WeiLin18/nihongo-coach
+   ```
 
-### GitHub: environment and secrets
+   ```bash
+   gh secret set CLOUDFLARE_ACCOUNT_ID --env production -R WeiLin18/nihongo-coach
+   ```
 
-1. Repo → **Settings → Environments → New environment** → `production`.
-2. **Required reviewers**: add yourself. Leave "Prevent self-review" off, since you are the only reviewer.
-3. **Deployment branches and tags**: choose **Selected branches and tags** → **Add deployment branch or tag rule** → type **Tag**, pattern `v*.*.*`.
-4. **Environment secrets** → add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Put them on the environment, not the repo, so only the approved `deploy` job can read them.
-5. Optional: **Settings → Rules → Rulesets → New tag ruleset** for `v*` that restricts creation and deletion to you, so nobody else can trigger a release.
-6. **Settings → Actions → General → Workflow permissions**: the default "Read repository contents" is fine; the `release` job asks for `contents: write` itself.
+   The account ID is shown by `npx wrangler whoami`.
 
-The Worker's own secrets (`OPENAI_API_KEY`, `APP_TOKEN`, `MCP_TOKEN`, Azure keys) stay in Cloudflare (`wrangler secret put`). `wrangler deploy` keeps them; GitHub never needs them.
+If the first deploy fails with an authentication error that mentions memberships or user details, add **Account Settings → Read** to the token.
 
-**While the repo is still private** on a free plan: environments are not available. Either make it public first, or put the two secrets under **Settings → Secrets and variables → Actions → Repository secrets** and delete the `environment: production` line from `release.yml`. That removes the approval step, so the tag push deploys straight away. Move them back once the repo is public.
+The Worker's own secrets (`OPENAI_API_KEY`, `APP_TOKEN`, `MCP_TOKEN`, Azure keys) stay in Cloudflare (`wrangler secret put`). `wrangler deploy` keeps them, and GitHub never needs them.
