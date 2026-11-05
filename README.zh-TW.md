@@ -41,6 +41,7 @@
 
 - **邊產生邊顯示**：送出後約 1 秒就開始出現答案（OpenAI 串流）
 - **重音不靠 AI 猜**：用 [Kanjium](https://github.com/mifunetoshiro/kanjium) 重音字典（約 10.8 萬筆）畫出 NHK 辭典式的高低線
+- **檢查自己的重音**：在重音區的單字按 🎙 念一次，就會看到你的音高曲線疊在字典高低線上，並告訴你該在哪一拍下降。全部在手機上分析，不上傳（[src/lib/pitch.ts](src/lib/pitch.ts)；`node scripts/check-pitch.ts` 用合成聲音跑檢查）
 - **從任何 App 一鍵查詞**：iOS 捷徑放進分享選單，選取文字或截圖（自動 OCR）就能查
 - **電腦上走訂閱額度**：Claude Code 的 `/jp` skill 直接寫卡片存進 App，不花 API 費用
 
@@ -247,7 +248,7 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 
 ## 下一步（Phase 2 / 3）
 - 情境包（沙龍、看醫生…）與「出發前複習」
-- 錄自己念 → 音高曲線與示範音疊圖比對
+- 把示範音的音高曲線也疊上去比對（需要 Azure TTS）
 - 會議即時聽寫（Mac 分頁音訊 / iPhone 麥克風）
 
 ## 授權

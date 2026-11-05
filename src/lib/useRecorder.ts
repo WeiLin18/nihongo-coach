@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 // Tap once to start, tap again to stop. iOS Safari records audio/mp4, others webm.
 // Leaving the page mid-recording stops the mic and drops the recording.
-export function useRecorder(onDone: (audio: Blob) => void) {
+// Pass audio constraints to turn off processing (e.g. noise suppression) that can bend pitch.
+export function useRecorder(onDone: (audio: Blob) => void, audio: MediaTrackConstraints | true = true) {
   const [recording, setRecording] = useState(false)
   const recorder = useRef<MediaRecorder | null>(null)
   const unmounted = useRef(false)
@@ -20,7 +21,7 @@ export function useRecorder(onDone: (audio: Blob) => void) {
       recorder.current.stop()
       return
     }
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const stream = await navigator.mediaDevices.getUserMedia({ audio })
     if (unmounted.current) {
       stream.getTracks().forEach((t) => t.stop())
       return
