@@ -28,3 +28,6 @@ dist-ssr
 .dev.vars
 data/
 .prod.vars
+
+# D1 exports (real user data, never commit)
+backups/
