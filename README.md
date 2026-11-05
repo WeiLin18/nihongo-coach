@@ -107,7 +107,7 @@ Every saved card (app, `/jp`, MCP) joins the queue automatically. Due cards come
 
 - **Pitch accent is never guessed by AI**: lines are drawn NHK-dictionary style from the [Kanjium](https://github.com/mifunetoshiro/kanjium) accent data (~108k entries).
 - **Check your own pitch accent**: tap 🎙 錄音比對 on a word in the accent section, say it, and see your pitch curve over the dictionary pattern with a verdict on where the fall should be. Tick **＋が** to say it with が, which is how you tell heiban from odaka. Analysed on the device, never uploaded ([src/lib/pitch.ts](src/lib/pitch.ts); `node scripts/check-pitch.ts` runs the checks on synthetic voices).
-- **Neural-voice audio** on the sentence, every example and every word (Azure Speech). A word is sent with its reading, and the server pins the reading and the Kanjium accent with SSML (`<phoneme>`), because a lone kanji is often read wrong (端 → たん, 命 → めい). Each clip is synthesized once: cached in R2 if you enable it, otherwise in the Workers Cache API.
+- **Neural-voice audio** on the sentence, every example and every word (Azure Speech). A word is sent with its reading, and the server pins the reading and the Kanjium accent with SSML (`<phoneme>`), because a lone kanji is often read wrong (端 → たん, 命 → めい). Each clip is synthesized once: cached in R2 if you enable it, otherwise in the Workers Cache API. Why Azure and not Gemini, and how the accent is pinned: [docs/tts.md](docs/tts.md).
 
 ### Other ways in
 
@@ -206,7 +206,7 @@ npm run deploy
 
 `AZURE_SPEECH_KEY` comes from an Azure **Speech service** resource (Free F0 gives 500k neural characters a month; region must match `AZURE_SPEECH_REGION`, `japaneast` by default). Without it `/api/tts` answers 501 and the app uses the browser voice.
 
-R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wrangler r2 bucket create nihongo-coach-audio`, uncomment `r2_buckets` in `wrangler.jsonc`, and deploy again. Without R2, audio is cached with the Workers Cache API, which is per data centre and only works on a custom domain (not on `*.workers.dev`).
+R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wrangler r2 bucket create nihongo-coach-audio`, uncomment `r2_buckets` in `wrangler.jsonc`, and deploy again. Without R2, audio is cached with the Workers Cache API, which works on `*.workers.dev` too but is per data centre and can be evicted.
 
 > After you change `database_id`, local dev uses a new empty database; run `npm run db:migrate:local` and the accent import again.
 

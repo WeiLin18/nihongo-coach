@@ -107,7 +107,7 @@ Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangle
 
 - **重音不靠 AI 猜**：用 [Kanjium](https://github.com/mifunetoshiro/kanjium) 重音字典（約 10.8 萬筆）畫出 NHK 辭典式的高低線。
 - **檢查自己的重音**：在重音區的單字按 🎙 錄音比對 念一次，就會看到你的音高曲線疊在字典高低線上，並告訴你該在哪一拍下降。勾「＋が」連助詞一起念，才分得出平板和尾高。全部在手機上分析，不上傳（[src/lib/pitch.ts](src/lib/pitch.ts)；`node scripts/check-pitch.ts` 用合成聲音跑檢查）。
-- **神經語音示範音**：整句、每個例句、每個單字都能播（Azure Speech）。單字會連讀音一起送出，伺服器用 SSML（`<phoneme>`）指定讀音和 Kanjium 的重音，因為只給一個漢字時常常唸錯（端 → たん、命 → めい）。同一段音只合成一次：有開 R2 存 R2，沒有就用 Workers Cache API。
+- **神經語音示範音**：整句、每個例句、每個單字都能播（Azure Speech）。單字會連讀音一起送出，伺服器用 SSML（`<phoneme>`）指定讀音和 Kanjium 的重音，因為只給一個漢字時常常唸錯（端 → たん、命 → めい）。同一段音只合成一次：有開 R2 存 R2，沒有就用 Workers Cache API。為什麼選 Azure 不選 Gemini、重音怎麼指定：見 [docs/tts.md](docs/tts.md)。
 
 ### 其他入口
 
@@ -204,7 +204,7 @@ npm run deploy
 
 `AZURE_SPEECH_KEY` 來自 Azure 的 **Speech service（語音服務）** 資源（Free F0 每月 50 萬字神經語音；區域要跟 `AZURE_SPEECH_REGION` 一致，預設 `japaneast`）。沒設的話 `/api/tts` 回 501，app 改用瀏覽器語音。
 
-R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行 `npx wrangler r2 bucket create nihongo-coach-audio`，再把 `wrangler.jsonc` 的 `r2_buckets` 取消註解後重新部署。沒開 R2 時改用 Workers Cache API 快取，它以資料中心為單位，而且只在自訂網域有效（`*.workers.dev` 不會快取）。
+R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行 `npx wrangler r2 bucket create nihongo-coach-audio`，再把 `wrangler.jsonc` 的 `r2_buckets` 取消註解後重新部署。沒開 R2 時改用 Workers Cache API 快取，`*.workers.dev` 上也有效，但以資料中心為單位，也可能被清掉。
 
 > 改了 `database_id` 之後本機會換成一份新的空資料庫，要重跑 `npm run db:migrate:local` 和重音匯入。
 
