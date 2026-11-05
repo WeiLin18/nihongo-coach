@@ -43,7 +43,7 @@ export async function buildSsml(env: Pick<TtsEnv, 'DB' | 'AZURE_SPEECH_VOICE'>, 
 }
 
 // Each distinct SSML is synthesized once: kept in R2 when bound, otherwise in the Workers
-// Cache API (per data centre, and only on a custom domain; workers.dev skips it).
+// Cache API (per data centre, can be evicted; works on workers.dev too).
 export async function synthesize(env: TtsEnv, req: TtsRequest): Promise<ArrayBuffer> {
   const ssml = await buildSsml(env, req)
   const key = `tts/v2/${await sha256(ssml)}.mp3`
