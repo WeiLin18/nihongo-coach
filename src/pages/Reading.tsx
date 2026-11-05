@@ -2,6 +2,7 @@ import { KIND_LABELS, PASSAGE_KINDS, type Passage, type PassageKind } from '@sha
 import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { RubyParts } from '../components/Ruby'
+import { SpeakButton } from '../components/SpeakButton'
 import { api } from '../lib/api'
 import { shortDate } from '../lib/date'
 import { rubyParts } from '../lib/furigana'
@@ -165,7 +166,12 @@ function PassageView({ id }: { id: string }) {
                   )
                 })}
               </p>
-              {revealed && <p className="text-sm leading-normal text-gray-500">{s.zh}</p>}
+              {revealed && (
+                <div className="flex items-start gap-2">
+                  <p className="min-w-0 flex-1 text-sm leading-normal text-gray-500">{s.zh}</p>
+                  <SpeakButton text={s.tokens.map((t) => t.text).join('')} parts={s.tokens} />
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -201,21 +207,26 @@ function PassageView({ id }: { id: string }) {
               const marked = misread.has(i) || cardId !== undefined
               return (
                 <li key={i} className={`rounded-lg border ${marked ? 'border-rose-300 bg-rose-50' : ''}`}>
-                  <button onClick={() => toggle(i)} disabled={cardId !== undefined} className="flex w-full items-start gap-3 p-3 text-left">
-                    <span
-                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
-                        marked ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-300'
-                      }`}
-                    >
-                      {marked && '✓'}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="text-lg font-semibold">{w.lemma}</span>
-                      <span className="ml-2 text-rose-600">{w.reading}</span>
-                      <span className="block text-sm">{w.zh}</span>
-                      {w.note && <span className="block text-xs text-gray-500">{w.note}</span>}
-                    </span>
-                  </button>
+                  <div className="flex items-start">
+                    <button onClick={() => toggle(i)} disabled={cardId !== undefined} className="flex min-w-0 flex-1 items-start gap-3 p-3 text-left">
+                      <span
+                        className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
+                          marked ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-300'
+                        }`}
+                      >
+                        {marked && '✓'}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="text-lg font-semibold">{w.lemma}</span>
+                        <span className="ml-2 text-rose-600">{w.reading}</span>
+                        <span className="block text-sm">{w.zh}</span>
+                        {w.note && <span className="block text-xs text-gray-500">{w.note}</span>}
+                      </span>
+                    </button>
+                    <div className="p-3 pl-0">
+                      <SpeakButton text={w.lemma} reading={w.reading} />
+                    </div>
+                  </div>
                   {cardId && (
                     <Link to={`/cards/${cardId}`} className="-mt-1 block px-11 pb-3 text-xs text-rose-600 underline">
                       已存成卡片 →

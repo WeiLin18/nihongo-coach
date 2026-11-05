@@ -87,7 +87,7 @@ Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangle
 產生一段短文，對話和新聞稿輪流出，場景是工作（會議、上線、規格）或東京生活。內容以 N1 程度設計，刻意放進容易唸錯的字（音讀訓讀、連濁、重複・相殺・早急這類特殊讀法）。
 
 1. 不看假名先大聲唸一遍。可以錄下來回放，錄音只留在手機上。
-2. 按「顯示讀音」：所有漢字詞標上假名、每句附中文翻譯，並列出容易唸錯的字（讀音、意思、為什麼容易唸錯）。
+2. 按「顯示讀音」：所有漢字詞標上假名、每句附中文翻譯，並列出容易唸錯的字（讀音、意思、為什麼容易唸錯）。每句和每個難字都有 🔊，播放時會指定讀音，所以「重複」不會被唸成じゅうふく。
 3. 在文中或清單點選唸錯的字，一鍵存成卡片（來源 `reading`，例句帶原文句子，重音查字典）。
 
 最近的主題和字存在 D1，下一篇不會重複。不用語音轉文字評分，因為它回傳的是漢字，看不出你怎麼唸。
@@ -107,7 +107,7 @@ Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangle
 
 - **重音不靠 AI 猜**：用 [Kanjium](https://github.com/mifunetoshiro/kanjium) 重音字典（約 10.8 萬筆）畫出 NHK 辭典式的高低線。
 - **檢查自己的重音**：在重音區的單字按 🎙 錄音比對 念一次，就會看到你的音高曲線疊在字典高低線上，並告訴你該在哪一拍下降。勾「＋が」連助詞一起念，才分得出平板和尾高。全部在手機上分析，不上傳（[src/lib/pitch.ts](src/lib/pitch.ts)；`node scripts/check-pitch.ts` 用合成聲音跑檢查）。
-- **神經語音示範音**：整句、每個例句、每個單字都能播（Azure Speech，有開 R2 會快取）。
+- **神經語音示範音**：整句、每個例句、每個單字都能播（Azure Speech）。單字會連讀音一起送出，伺服器用 SSML（`<phoneme>`）指定讀音和 Kanjium 的重音，因為只給一個漢字時常常唸錯（端 → たん、命 → めい）。同一段音只合成一次：有開 R2 存 R2，沒有就用 Workers Cache API。
 
 ### 其他入口
 
@@ -202,7 +202,9 @@ npm run deploy
 
 > ⚠️ 遠端匯入重音字典大約會寫入 32 萬列（10.8 萬筆資料＋索引），超過免費方案每天 10 萬列的寫入上限。匯入本身會完成，但當天之後的寫入（存卡片）會被擋到隔天 00:00 UTC（日本時間 09:00）。只需要匯入一次；之後一般使用每張卡片只寫入幾列。
 
-R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行 `npx wrangler r2 bucket create nihongo-coach-audio`，再把 `wrangler.jsonc` 的 `r2_buckets` 取消註解後重新部署。
+`AZURE_SPEECH_KEY` 來自 Azure 的 **Speech service（語音服務）** 資源（Free F0 每月 50 萬字神經語音；區域要跟 `AZURE_SPEECH_REGION` 一致，預設 `japaneast`）。沒設的話 `/api/tts` 回 501，app 改用瀏覽器語音。
+
+R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行 `npx wrangler r2 bucket create nihongo-coach-audio`，再把 `wrangler.jsonc` 的 `r2_buckets` 取消註解後重新部署。沒開 R2 時改用 Workers Cache API 快取，它以資料中心為單位，而且只在自訂網域有效（`*.workers.dev` 不會快取）。
 
 > 改了 `database_id` 之後本機會換成一份新的空資料庫，要重跑 `npm run db:migrate:local` 和重音匯入。
 
@@ -264,7 +266,7 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | POST | `/api/practice/:id/turns` | `{ text }` → 修正與對方下一句；SSE 串流，最後是 `turn` 事件 |
 | POST | `/api/practice/turns/:id/card` | 把該回合的修正存成卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
-| POST | `/api/tts` | `{ text }` → mp3 |
+| POST | `/api/tts` | `{ text, reading?, parts? }` → mp3。`reading`（單字）指定讀音和字典重音；`parts`（`[{ text, reading }]`，一句的分詞）指定讀音。沒設 `AZURE_SPEECH_KEY` 時回 501 |
 | GET / POST | `/api/reading` | 最近的讀音段落／`{ kind? }`（`conversation` 或 `news`，不填就輪流）→ 新段落 |
 | GET | `/api/reading/:id` | 單一段落 |
 | POST | `/api/reading/:id/cards` | `{ words }`（段落 `words` 的索引）→ 把唸錯的字存成卡片 |

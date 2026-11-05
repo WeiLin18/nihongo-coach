@@ -9,6 +9,13 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 ### Added
 
 - **Automated releases**: CI on every pull request and on `main` (lint, type check, build, pitch check, and a new migration-numbering check, `npm run check` locally). `npm run release -- <patch|minor|major>` bumps the version, moves these notes under a dated heading, commits, tags and pushes after a prompt. Pushing a `vX.Y.Z` tag creates the GitHub Release and, after approval on the `production` environment, applies remote D1 migrations and deploys. `npm run backup` exports the remote database to the git-ignored `backups/`. See [docs/RELEASING.md](docs/RELEASING.md).
+- 🔊 on each sentence and each tricky word in 練習 → 讀音, shown after 顯示讀音.
+
+### Changed
+
+- `/api/tts` takes `{ text, reading?, parts? }`. With `reading` (card accent words, reading-practice words) the server looks up the Kanjium accent and sends Azure SSML `<phoneme alphabet="sapi">` (katakana, `'` before the accented mora), so a lone kanji is read right (端 was read たん, 命 めい) and the accent follows the dictionary. `parts` pins the readings of a sentence's tokens. Plain `{ text }` works as before.
+- Audio is cached in the Workers Cache API when no R2 bucket is bound (R2 is still used when bound). Cache keys now hash the SSML, so audio cached by 0.3.0 is not reused.
+- The browser-voice fallback flag moved to localStorage key `nihongo-coach-tts-off-v2`, so devices that remembered "server TTS off" from 0.3.0 try the server again right after Azure is configured.
 
 ## [0.3.0] - 2026-11-05
 

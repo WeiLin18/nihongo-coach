@@ -1,3 +1,4 @@
+import type { TtsRequest } from '@shared/schema'
 import { api, ApiError } from './api'
 
 // One shared player for every 🔊 button: starting a phrase stops whatever is playing,
@@ -9,8 +10,9 @@ const cache = new Map<string, string>()
 
 // /api/tts answers 501 when Azure is not configured. Remember that, so later taps skip the
 // request and call speechSynthesis synchronously inside the tap (iOS needs the user gesture).
-// Expires after a day in case TTS gets configured later.
-const SERVER_OFF_KEY = 'nihongo-coach-tts-off'
+// Expires after a day in case TTS gets configured later. (v2: v0.3.0 set the old key on every
+// device while Azure was off, so a new name makes them try the server again right away.)
+const SERVER_OFF_KEY = 'nihongo-coach-tts-off-v2'
 const SERVER_OFF_TTL = 24 * 60 * 60 * 1000
 
 function readServerOff(): boolean {
@@ -86,18 +88,22 @@ function speakBrowser(text: string): Engine | null {
 }
 
 // Prefer server TTS (correct pitch accent); fall back to the browser voice.
+// Pass `reading` for a single word, or `parts` for a sentence with token readings, so the
+// server can pin readings (and, for a word, the dictionary accent).
 // Resolves with the engine used, or null when a newer tap or stopSpeaking() superseded it.
-export async function speak(text: string, id: string): Promise<Engine | null> {
+export async function speak(req: TtsRequest, id: string): Promise<Engine | null> {
+  const { text } = req
   stopSpeaking()
   const mine = seq
   setOwner(id)
   if (serverOff) return speakBrowser(text)
 
   try {
-    let url = cache.get(text)
+    const key = JSON.stringify(req)
+    let url = cache.get(key)
     if (!url) {
-      url = URL.createObjectURL(await api.tts(text))
-      cache.set(text, url)
+      url = URL.createObjectURL(await api.tts(req))
+      cache.set(key, url)
     }
     if (mine !== seq) return null
     const a = new Audio(url)

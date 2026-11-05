@@ -87,7 +87,7 @@ Prompts are in [worker/lib/practice.ts](worker/lib/practice.ts); the model is `O
 A short passage, alternating between a dialogue (對話) and a news-style report (新聞), set at work (meetings, releases, specs) or in daily Tokyo life. It is written for an N1-level reader and packed with words that are easy to misread (on/kun choice, rendaku, irregular readings like 重複, 相殺, 早急).
 
 1. Read it aloud with no furigana. You can record yourself and play it back; the audio stays on the phone.
-2. Tap **顯示讀音** (show readings): every kanji word gets furigana, each sentence gets a Chinese translation, and the tricky words are listed with reading, meaning, and why they're misread.
+2. Tap **顯示讀音** (show readings): every kanji word gets furigana, each sentence gets a Chinese translation, and the tricky words are listed with reading, meaning, and why they're misread. 🔊 plays each sentence and each tricky word with the reading pinned, so 重複 is never read じゅうふく.
 3. Tap the words you got wrong, in the passage or the list, and save them as cards in one tap (source `reading`, with the passage sentence as an example and dictionary pitch accent).
 
 Recent topics and words are kept in D1 so the next passage doesn't repeat them. Speech-to-text isn't used to grade, because it writes kanji back and can't tell how you read them.
@@ -107,7 +107,7 @@ Every saved card (app, `/jp`, MCP) joins the queue automatically. Due cards come
 
 - **Pitch accent is never guessed by AI**: lines are drawn NHK-dictionary style from the [Kanjium](https://github.com/mifunetoshiro/kanjium) accent data (~108k entries).
 - **Check your own pitch accent**: tap 🎙 錄音比對 on a word in the accent section, say it, and see your pitch curve over the dictionary pattern with a verdict on where the fall should be. Tick **＋が** to say it with が, which is how you tell heiban from odaka. Analysed on the device, never uploaded ([src/lib/pitch.ts](src/lib/pitch.ts); `node scripts/check-pitch.ts` runs the checks on synthetic voices).
-- **Neural-voice audio** on the sentence, every example and every word (Azure Speech, cached in R2 if you enable it).
+- **Neural-voice audio** on the sentence, every example and every word (Azure Speech). A word is sent with its reading, and the server pins the reading and the Kanjium accent with SSML (`<phoneme>`), because a lone kanji is often read wrong (端 → たん, 命 → めい). Each clip is synthesized once: cached in R2 if you enable it, otherwise in the Workers Cache API.
 
 ### Other ways in
 
@@ -204,7 +204,9 @@ npm run deploy
 
 > ⚠️ Importing the accent dictionary remotely writes about 320k rows (108k entries plus indexes), more than the free plan's 100k rows written per day. The import itself completes, but further writes (saving cards) are blocked until 00:00 UTC the next day. You only import once; after that each card writes just a few rows.
 
-R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wrangler r2 bucket create nihongo-coach-audio`, uncomment `r2_buckets` in `wrangler.jsonc`, and deploy again.
+`AZURE_SPEECH_KEY` comes from an Azure **Speech service** resource (Free F0 gives 500k neural characters a month; region must match `AZURE_SPEECH_REGION`, `japaneast` by default). Without it `/api/tts` answers 501 and the app uses the browser voice.
+
+R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wrangler r2 bucket create nihongo-coach-audio`, uncomment `r2_buckets` in `wrangler.jsonc`, and deploy again. Without R2, audio is cached with the Workers Cache API, which is per data centre and only works on a custom domain (not on `*.workers.dev`).
 
 > After you change `database_id`, local dev uses a new empty database; run `npm run db:migrate:local` and the accent import again.
 
@@ -267,7 +269,7 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | POST | `/api/practice/:id/turns` | `{ text }` → correction and the next line; streams over SSE, ending with a `turn` event |
 | POST | `/api/practice/turns/:id/card` | Saves that turn's correction as a card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
-| POST | `/api/tts` | `{ text }` → mp3 |
+| POST | `/api/tts` | `{ text, reading?, parts? }` → mp3. `reading` (one word) pins reading and dictionary accent; `parts` (`[{ text, reading }]`, a sentence's tokens) pins readings. 501 when `AZURE_SPEECH_KEY` is not set |
 | GET / POST | `/api/reading` | Recent reading passages / `{ kind? }` (`conversation` or `news`; alternates when omitted) → a new passage |
 | GET | `/api/reading/:id` | One passage |
 | POST | `/api/reading/:id/cards` | `{ words }` (indexes into the passage's `words`) → saves the misread words as cards |

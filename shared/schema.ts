@@ -32,6 +32,21 @@ export const AskRequest = z.object({
 })
 export type AskRequest = z.infer<typeof AskRequest>
 
+// 🔊 playback. With `reading` (a single word), the server takes the accent from the dictionary and
+// pins reading and accent with SSML, so a lone kanji like 端 or 命 is not read as たん or めい.
+// `parts` (a sentence split into tokens with readings) pins the readings only; a part whose
+// reading is not plain kana is just read as written.
+export const KANA = /^[\u3041-\u309f\u30a0-\u30ffー]+$/
+export const TtsRequest = z.object({
+  text: z.string().trim().min(1).max(300),
+  reading: z.string().regex(KANA).max(40).optional(),
+  parts: z
+    .array(z.object({ text: z.string().max(80), reading: z.string().max(80) }))
+    .max(120)
+    .optional(),
+})
+export type TtsRequest = z.infer<typeof TtsRequest>
+
 // What Claude returns. Pitch accent is deliberately NOT part of this: LLMs get
 // it wrong too often, so it is filled from the accent dictionary instead.
 export const CardDraft = z.object({

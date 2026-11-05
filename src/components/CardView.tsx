@@ -65,7 +65,7 @@ export function CardView({ card }: { card: Partial<Card> }) {
             <div key={`${w.surface}-${w.reading}`} className="flex flex-wrap items-end gap-4 border-b pb-3">
               <div className="w-20 shrink-0">
                 <p className="font-medium">{w.surface}</p>
-                <SpeakButton text={w.surface} />
+                <SpeakButton text={w.surface} reading={w.reading} />
               </div>
               {w.accents ? (
                 <>

@@ -10,6 +10,7 @@ import type {
   ReviewQueue,
   ReviewRating,
   ReviewStats,
+  TtsRequest,
 } from '@shared/schema'
 import { parse as parsePartialJson } from 'partial-json'
 
@@ -106,7 +107,7 @@ export const api = {
   reviewCount: async (): Promise<ReviewStats> => (await request(`/review/count?${reviewQuery()}`)).json(),
   review: async (id: string, rating: ReviewRating): Promise<ReviewStats> =>
     (await request(`/review/${id}?${reviewQuery()}`, json({ rating }))).json(),
-  tts: async (text: string): Promise<Blob> => (await request('/tts', json({ text }))).blob(),
+  tts: async (req: TtsRequest): Promise<Blob> => (await request('/tts', json(req))).blob(),
   passages: async (): Promise<Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt'>[]> =>
     (await request('/reading')).json(),
   passage: async (id: string): Promise<Passage> => (await request(`/reading/${id}`)).json(),
