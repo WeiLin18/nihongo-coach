@@ -81,3 +81,71 @@ export type Card = CardDraft & {
   wordAccents: WordAccent[]
   createdAt: string
 }
+
+// Conversation practice (會話練習)
+
+export const PRACTICE_KINDS = ['work', 'life'] as const
+export type PracticeKind = (typeof PRACTICE_KINDS)[number]
+
+export const PRACTICE_KIND_LABELS: Record<PracticeKind, string> = { work: '工作', life: '生活' }
+
+// Japanese lines may mark hard words with readings as {漢字|かんじ}; see src/components/Ruby.tsx.
+const RUBY =
+  'Mark readings as {漢字|かんじ} only on rare or hard-to-read words (beyond JLPT N1, uncommon kanji, irregular readings); most lines need none.'
+
+const PartnerLine = z.object({
+  ja: z.string().describe(`The other person's line in natural spoken Japanese. ${RUBY}`),
+  zh: z.string().describe('Traditional Chinese (Taiwan) translation, shown only on request'),
+})
+
+// What the AI writes to open a drill. No model answer: the learner replies first.
+export const PracticeScenario = z.object({
+  title: z.string().describe('Short scene title in Traditional Chinese, e.g. 跟 PM 回報進度延遲'),
+  situation: z.string().describe('In Traditional Chinese, 1-2 sentences: where, who, what is going on'),
+  userRole: z.string().describe("In Traditional Chinese: the learner's role in the scene"),
+  partnerRole: z.string().describe('In Traditional Chinese: who the other person is, e.g. PM 佐藤さん'),
+  goal: z.string().describe('In Traditional Chinese, one short line: what the learner should try to get done'),
+  partner: PartnerLine.describe('The opening line or question the learner must reply to'),
+})
+export type PracticeScenario = z.infer<typeof PracticeScenario>
+
+// What the AI writes after each learner reply.
+export const PracticeReply = z.object({
+  verdict: z
+    .enum(['natural', 'minor', 'unnatural'])
+    .describe('natural: fine as is; minor: small wording or register fix; unnatural: a native speaker would not say it'),
+  natural: z
+    .string()
+    .describe(`The natural spoken version keeping the learner's intent and register; their reply unchanged when verdict is natural. ${RUBY}`),
+  explanation: z
+    .string()
+    .describe('In Traditional Chinese, 1-3 short sentences on what changed and why (nuance, register); empty string when natural'),
+  partner: PartnerLine.nullable().describe("The other person's next line; when the conversation is over, a short closing line or null"),
+  wrapUp: z
+    .string()
+    .nullable()
+    .describe('Only when the conversation is over: 2-3 short sentences in Traditional Chinese on how it went and 1-2 expressions to remember; otherwise null'),
+})
+export type PracticeReply = z.infer<typeof PracticeReply>
+
+export const StartPracticeRequest = z.object({ kind: z.enum(PRACTICE_KINDS).optional() })
+export const PracticeTurnRequest = z.object({ text: z.string().trim().min(1).max(500) })
+
+export type PracticeTurn = {
+  id: string
+  idx: number
+  text: string
+  reply: PracticeReply
+  cardId: string | null
+  createdAt: string
+}
+
+export type PracticeSession = {
+  id: string
+  kind: PracticeKind
+  theme: string
+  scenario: PracticeScenario
+  turns: PracticeTurn[]
+  done: boolean
+  createdAt: string
+}
