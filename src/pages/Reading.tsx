@@ -1,8 +1,9 @@
 import { KIND_LABELS, PASSAGE_KINDS, type Passage, type PassageKind } from '@shared/reading'
-import type { Card } from '@shared/schema'
 import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { RubyParts } from '../components/Ruby'
 import { api } from '../lib/api'
+import { shortDate } from '../lib/date'
 import { rubyParts } from '../lib/furigana'
 import { useRecorder } from '../lib/useRecorder'
 
@@ -66,7 +67,7 @@ function ReadingHome() {
           <Link key={p.id} to={`/reading/${p.id}`} className="flex items-center gap-2 border-b py-2 text-sm">
             <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{KIND_LABELS[p.kind]}</span>
             <span className="flex-1 truncate">{p.title}</span>
-            <span className="text-xs text-gray-400">{p.createdAt.slice(5, 10)}</span>
+            <span className="text-xs text-gray-400">{shortDate(p.createdAt)}</span>
           </Link>
         ))}
       </section>
@@ -79,13 +80,20 @@ function PassageView({ id }: { id: string }) {
   const [passage, setPassage] = useState<Passage | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [misread, setMisread] = useState<Set<number>>(new Set())
-  const [saved, setSaved] = useState<Card[] | null>(null)
+  // Word index → card id, for words already saved as cards (now or from an earlier visit).
+  const [saved, setSaved] = useState<Map<number, string>>(new Map())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [audioUrl, setAudioUrl] = useState('')
 
   useEffect(() => {
-    api.passage(id).then(setPassage, (e: Error) => setError(e.message))
+    api.passage(id).then(
+      (p) => {
+        setPassage(p)
+        setSaved(new Map(p.saved.map((w) => [w.index, w.cardId])))
+      },
+      (e: Error) => setError(e.message),
+    )
   }, [id])
 
   // Recorded only for playback on this device; nothing is uploaded.
@@ -96,19 +104,23 @@ function PassageView({ id }: { id: string }) {
 
   // Token text → index into passage.words, so tricky words can be tapped in the passage itself.
   const wordIndex = new Map(passage.words.map((w, i) => [w.surface, i]))
-  const toggle = (i: number) =>
+  const toggle = (i: number) => {
+    if (saved.has(i)) return
     setMisread((prev) => {
       const next = new Set(prev)
       if (next.has(i)) next.delete(i)
       else next.add(i)
       return next
     })
+  }
 
   async function save() {
     setBusy(true)
     setError('')
     try {
-      setSaved(await api.saveReadingCards(id, [...misread].sort((a, b) => a - b)))
+      const words = await api.saveReadingCards(id, [...misread].sort((a, b) => a - b))
+      setSaved(new Map(words.map((w) => [w.index, w.cardId])))
+      setMisread(new Set())
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -137,23 +149,15 @@ function PassageView({ id }: { id: string }) {
                 {s.tokens.map((t, ti) => {
                   const wi = wordIndex.get(t.text)
                   if (!revealed) return <Fragment key={ti}>{t.text}</Fragment>
-                  const ruby = rubyParts(t.text, t.reading).map((p, pi) =>
-                    p.rt ? (
-                      <ruby key={pi} className="[ruby-align:center]">
-                        {p.base}
-                        <rt className="text-[0.6em] text-gray-500">{p.rt}</rt>
-                      </ruby>
-                    ) : (
-                      <Fragment key={pi}>{p.base}</Fragment>
-                    ),
-                  )
+                  const ruby = <RubyParts parts={rubyParts(t.text, t.reading)} />
                   if (wi === undefined) return <Fragment key={ti}>{ruby}</Fragment>
                   return (
                     <button
                       key={ti}
                       onClick={() => toggle(wi)}
+                      disabled={saved.has(wi)}
                       className={`rounded px-0.5 underline decoration-dotted underline-offset-4 ${
-                        misread.has(wi) ? 'bg-rose-100 decoration-rose-500' : 'decoration-gray-400'
+                        misread.has(wi) || saved.has(wi) ? 'bg-rose-100 decoration-rose-500' : 'decoration-gray-400'
                       }`}
                     >
                       {ruby}
@@ -192,53 +196,43 @@ function PassageView({ id }: { id: string }) {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-gray-500">容易唸錯的字・點選你唸錯的</h2>
           <ul className="space-y-2">
-            {passage.words.map((w, i) => (
-              <li key={i}>
-                <button
-                  onClick={() => toggle(i)}
-                  disabled={saved !== null}
-                  className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left ${
-                    misread.has(i) ? 'border-rose-300 bg-rose-50' : ''
-                  }`}
-                >
-                  <span
-                    className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
-                      misread.has(i) ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-300'
-                    }`}
-                  >
-                    {misread.has(i) && '✓'}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="text-lg font-semibold">{w.lemma}</span>
-                    <span className="ml-2 text-rose-600">{w.reading}</span>
-                    <span className="block text-sm">{w.zh}</span>
-                    {w.note && <span className="block text-xs text-gray-500">{w.note}</span>}
-                  </span>
-                </button>
-              </li>
-            ))}
+            {passage.words.map((w, i) => {
+              const cardId = saved.get(i)
+              const marked = misread.has(i) || cardId !== undefined
+              return (
+                <li key={i} className={`rounded-lg border ${marked ? 'border-rose-300 bg-rose-50' : ''}`}>
+                  <button onClick={() => toggle(i)} disabled={cardId !== undefined} className="flex w-full items-start gap-3 p-3 text-left">
+                    <span
+                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
+                        marked ? 'border-rose-500 bg-rose-500 text-white' : 'border-gray-300'
+                      }`}
+                    >
+                      {marked && '✓'}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="text-lg font-semibold">{w.lemma}</span>
+                      <span className="ml-2 text-rose-600">{w.reading}</span>
+                      <span className="block text-sm">{w.zh}</span>
+                      {w.note && <span className="block text-xs text-gray-500">{w.note}</span>}
+                    </span>
+                  </button>
+                  {cardId && (
+                    <Link to={`/cards/${cardId}`} className="-mt-1 block px-11 pb-3 text-xs text-rose-600 underline">
+                      已存成卡片 →
+                    </Link>
+                  )}
+                </li>
+              )
+            })}
           </ul>
 
-          {saved ? (
-            <div className="rounded-lg bg-green-50 p-3 text-sm">
-              <p>已存成 {saved.length} 張卡片：</p>
-              <p className="mt-1 flex flex-wrap gap-x-3">
-                {saved.map((c) => (
-                  <Link key={c.id} to={`/cards/${c.id}`} className="text-rose-600 underline">
-                    {c.ja}
-                  </Link>
-                ))}
-              </p>
-            </div>
-          ) : (
-            <button
-              onClick={save}
-              disabled={busy || misread.size === 0}
-              className="h-12 w-full rounded-lg bg-rose-600 text-white disabled:opacity-40"
-            >
-              {busy ? '儲存中…' : misread.size ? `把 ${misread.size} 個字存成卡片` : '點選唸錯的字'}
-            </button>
-          )}
+          <button
+            onClick={save}
+            disabled={busy || misread.size === 0}
+            className="h-12 w-full rounded-lg bg-rose-600 text-white disabled:opacity-40"
+          >
+            {busy ? '儲存中…' : misread.size ? `把 ${misread.size} 個字存成卡片` : saved.size ? `已存 ${saved.size} 張卡片` : '點選唸錯的字'}
+          </button>
         </section>
       )}
 

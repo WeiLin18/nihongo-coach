@@ -10,9 +10,9 @@ import {
   type PracticeTurn,
 } from '../../shared/schema'
 import { stripRuby } from '../../shared/format'
-import { practiceSessions, practiceTurns } from '../db/schema'
+import { cards, practiceSessions, practiceTurns } from '../db/schema'
 import { draftCard, streamParsed, SYSTEM } from './ai'
-import { saveCard } from './cards'
+import { saveCard, toCard } from './cards'
 
 // A drill is the opening line plus this many learner replies at most, then a wrap-up.
 export const MAX_TURNS = 4
@@ -218,9 +218,15 @@ export async function replyPractice(
 
   const done = reply.wrapUp !== null || idx >= MAX_TURNS
   const turn: PracticeTurn = { id: crypto.randomUUID(), idx, text, reply, cardId: null, createdAt: new Date().toISOString() }
-  await db(env)
-    .insert(practiceTurns)
-    .values({ ...turn, sessionId: session.id })
+  // (session_id, idx) is unique, so a second reply sent at the same time fails here instead of adding a duplicate turn.
+  try {
+    await db(env)
+      .insert(practiceTurns)
+      .values({ ...turn, sessionId: session.id })
+  } catch (err) {
+    if (String((err as Error).cause ?? err).includes('UNIQUE')) throw new Error('這一句已經回覆過了，請重新整理頁面')
+    throw err
+  }
   if (done) await db(env).update(practiceSessions).set({ done: true }).where(eq(practiceSessions.id, session.id))
   return { turn, done }
 }
@@ -229,6 +235,11 @@ export async function replyPractice(
 export async function saveTurnCard(env: Env, turnId: string): Promise<Card | null> {
   const row = await db(env).select().from(practiceTurns).where(eq(practiceTurns.id, turnId)).get()
   if (!row) return null
+  // Already saved (a double tap or a retry): return that card instead of making another.
+  if (row.cardId) {
+    const existing = await db(env).select().from(cards).where(eq(cards.id, row.cardId)).get()
+    if (existing) return toCard(existing)
+  }
   const session = await getPractice(env, row.sessionId)
   if (!session) return null
 

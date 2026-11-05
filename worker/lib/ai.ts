@@ -51,13 +51,20 @@ function cardRequest(env: Env, req: AskRequest) {
 }
 
 export async function draftCard(env: Env, req: AskRequest): Promise<CardDraft> {
-  const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
-  const response = await client.responses.parse(cardRequest(env, req))
+  return parseStructured(env, cardRequest(env, req), CardDraft)
+}
 
+// A structured-output request: the JSON schema is in `text.format` (from zodTextFormat).
+type StructuredRequest = { model: string; instructions: string; input: string; reasoning: { effort: 'none' }; text: object }
+
+// Runs a structured-output request and parses the JSON with `schema`.
+export async function parseStructured<T>(env: Env, body: StructuredRequest, schema: z.ZodType<T>): Promise<T> {
+  const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
+  const response = await client.responses.create({ ...body, stream: false })
   const refused = response.output.some((o) => o.type === 'message' && o.content.some((c) => c.type === 'refusal'))
   if (refused) throw new RefusalError('AI declined this request')
-  if (!response.output_parsed) throw new Error(`Could not parse card (status: ${response.status})`)
-  return response.output_parsed
+  if (!response.output_text) throw new Error(`AI returned no output (status: ${response.status})`)
+  return schema.parse(JSON.parse(response.output_text))
 }
 
 // Same as draftCard, but hands each chunk of the JSON text to onDelta as it is generated.
@@ -68,7 +75,7 @@ export async function streamCard(env: Env, req: AskRequest, onDelta: (text: stri
 // Streams a structured-output request and parses the finished JSON with `schema`.
 export async function streamParsed<T>(
   env: Env,
-  body: { model: string; instructions: string; input: string; reasoning: { effort: 'none' }; text: object },
+  body: StructuredRequest,
   schema: z.ZodType<T>,
   onDelta: (text: string) => Promise<void>,
 ): Promise<T> {

@@ -1,11 +1,10 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
-import OpenAI from 'openai'
 import { zodTextFormat } from 'openai/helpers/zod'
-import { PassageDraft, type Passage, type PassageKind } from '../../shared/reading'
-import type { Card, CardDraft } from '../../shared/schema'
-import { passages } from '../db/schema'
-import { RefusalError } from './ai'
+import { PassageDraft, type Passage, type PassageKind, type SavedWord } from '../../shared/reading'
+import type { CardDraft } from '../../shared/schema'
+import { cards, passages } from '../db/schema'
+import { parseStructured } from './ai'
 import { saveCard } from './cards'
 
 const READING_SYSTEM = `You write short Japanese passages for kanji reading practice.
@@ -58,34 +57,60 @@ export async function generatePassage(env: Env, requested?: PassageKind): Promis
     .filter(Boolean)
     .join('\n\n')
 
-  const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
-  const response = await client.responses.parse({
-    model: env.OPENAI_MODEL_READING,
-    instructions: READING_SYSTEM,
-    input,
-    reasoning: { effort: 'none' },
-    text: { format: zodTextFormat(PassageDraft, 'passage') },
-  })
-  const refused = response.output.some((o) => o.type === 'message' && o.content.some((c) => c.type === 'refusal'))
-  if (refused) throw new RefusalError('AI declined this request')
-  if (!response.output_parsed) throw new Error(`Could not parse passage (status: ${response.status})`)
-
-  const row = {
-    id: crypto.randomUUID(),
-    kind,
-    topic: response.output_parsed.topic,
-    draft: response.output_parsed,
-    createdAt: new Date().toISOString(),
-  }
+  const draft = alignSurfaces(
+    await parseStructured(
+      env,
+      {
+        model: env.OPENAI_MODEL_READING,
+        instructions: READING_SYSTEM,
+        input,
+        reasoning: { effort: 'none' },
+        text: { format: zodTextFormat(PassageDraft, 'passage') },
+      },
+      PassageDraft,
+    ),
+  )
+  const row = { id: crypto.randomUUID(), kind, topic: draft.topic, draft, createdAt: new Date().toISOString() }
   await drizzle(env.DB).insert(passages).values(row)
-  return toPassage(row)
+  return { ...toPassage(row), saved: [] }
 }
 
-export const toPassage = (r: typeof passages.$inferSelect): Passage => ({ ...r.draft, id: r.id, kind: r.kind, createdAt: r.createdAt })
+type Sentence = PassageDraft['sentences'][number]
+const sentenceText = (s: Sentence) => s.tokens.map((t) => t.text).join('')
+const sentenceReading = (s: Sentence) => s.tokens.map((t) => t.reading || t.text).join('')
+
+// The model sometimes writes a word's surface differently from its token (伴う for 伴い, or a token
+// that also holds a particle). Point each word at the token that contains it, so it can be tapped.
+function alignSurfaces(draft: PassageDraft): PassageDraft {
+  const tokens = draft.sentences.flatMap((s) => s.tokens).filter((t) => t.reading)
+  const words = draft.words.map((w) => {
+    if (tokens.some((t) => t.text === w.surface)) return w
+    const stem = w.lemma.slice(0, -1) || w.lemma
+    const hit = tokens.find((t) => t.text.includes(w.surface)) ?? tokens.find((t) => t.text.startsWith(stem))
+    return hit ? { ...w, surface: hit.text } : w
+  })
+  return { ...draft, words }
+}
+
+const toPassage = (r: typeof passages.$inferSelect): Omit<Passage, 'saved'> => ({ ...r.draft, id: r.id, kind: r.kind, createdAt: r.createdAt })
+
+// Words of the passage that already have a reading card, matched by dictionary form.
+async function savedWords(env: Env, words: PassageDraft['words']): Promise<SavedWord[]> {
+  const rows = await drizzle(env.DB)
+    .select({ id: cards.id, ja: cards.ja })
+    .from(cards)
+    .where(and(eq(cards.source, 'reading'), inArray(cards.ja, words.map((w) => w.lemma))))
+  return words.flatMap((w, index) => {
+    const card = rows.find((r) => r.ja === w.lemma)
+    return card ? [{ index, cardId: card.id }] : []
+  })
+}
 
 export async function getPassage(env: Env, id: string): Promise<Passage | null> {
   const row = await drizzle(env.DB).select().from(passages).where(eq(passages.id, id)).get()
-  return row ? toPassage(row) : null
+  if (!row) return null
+  const passage = toPassage(row)
+  return { ...passage, saved: await savedWords(env, passage.words) }
 }
 
 export async function listPassages(env: Env, limit = 20): Promise<Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt'>[]> {
@@ -93,29 +118,32 @@ export async function listPassages(env: Env, limit = 20): Promise<Pick<Passage, 
   return rows.map(({ id, kind, topic, draft, createdAt }) => ({ id, kind, topic, title: draft.title, createdAt }))
 }
 
-const sentenceText = (s: PassageDraft['sentences'][number]) => s.tokens.map((t) => t.text).join('')
-const sentenceReading = (s: PassageDraft['sentences'][number]) => s.tokens.map((t) => t.reading || t.text).join('')
-
 // Turns misread words into lookup cards, with the passage sentence as the first example.
-export async function saveReadingCards(env: Env, passage: Passage, indexes: number[]): Promise<Card[]> {
-  const saved: Card[] = []
-  for (const i of [...new Set(indexes)]) {
-    const w = passage.words[i]
-    if (!w) continue
-    const sentence = passage.sentences.find((s) => s.tokens.some((t) => t.text === w.surface)) ?? passage.sentences[0]
-    const draft: CardDraft = {
-      ja: w.lemma,
-      reading: w.reading,
-      zh: w.zh,
-      en: w.en,
-      nuance: [w.note, `出自讀音練習「${passage.title}」`].filter(Boolean).join('\n'),
-      politeness: 'neutral',
-      category: passage.category,
-      examples: [{ ja: sentenceText(sentence), reading: sentenceReading(sentence), zh: sentence.zh }, w.example],
-      words: [{ surface: w.lemma, reading: w.reading }],
-      correction: null,
-    }
-    saved.push(await saveCard(env, { mode: 'lookup', source: 'reading', input: w.surface, draft }))
-  }
-  return saved
+// Words that already have a reading card are skipped. Returns every saved word of the passage.
+export async function saveReadingCards(env: Env, passage: Passage, indexes: number[]): Promise<SavedWord[]> {
+  const already = new Set(passage.saved.map((s) => s.index))
+  const todo = [...new Set(indexes)].filter((i) => passage.words[i] && !already.has(i))
+  const added = await Promise.all(
+    todo.map(async (index): Promise<SavedWord> => {
+      const w = passage.words[index]
+      const sentence =
+        passage.sentences.find((s) => sentenceText(s).includes(w.surface)) ??
+        passage.sentences.find((s) => sentenceText(s).includes(w.lemma.slice(0, -1) || w.lemma))
+      const draft: CardDraft = {
+        ja: w.lemma,
+        reading: w.reading,
+        zh: w.zh,
+        en: w.en,
+        nuance: [w.note, `出自讀音練習「${passage.title}」`].filter(Boolean).join('\n'),
+        politeness: 'neutral',
+        category: passage.category,
+        examples: sentence ? [{ ja: sentenceText(sentence), reading: sentenceReading(sentence), zh: sentence.zh }, w.example] : [w.example],
+        words: [{ surface: w.lemma, reading: w.reading }],
+        correction: null,
+      }
+      const card = await saveCard(env, { mode: 'lookup', source: 'reading', input: w.surface, draft })
+      return { index, cardId: card.id }
+    }),
+  )
+  return [...passage.saved, ...added].sort((a, b) => a.index - b.index)
 }

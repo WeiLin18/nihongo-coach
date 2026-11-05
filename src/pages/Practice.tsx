@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router'
 import { Ruby } from '../components/Ruby'
 import { SpeakButton } from '../components/SpeakButton'
 import { api, type DeepPartial, type PracticeSummary } from '../lib/api'
+import { shortDate } from '../lib/date'
 import { useRecorder } from '../lib/useRecorder'
 
 const VERDICTS = {
@@ -270,7 +271,7 @@ export function Practice() {
             <Link key={r.id} to={`/practice?id=${r.id}`} className="flex items-center gap-2 border-b py-2 text-sm">
               <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{PRACTICE_KIND_LABELS[r.kind]}</span>
               <span className="flex-1 truncate">{r.scenario.title}</span>
-              <span className="text-xs text-gray-400">{r.done ? r.createdAt.slice(5, 10) : '進行中'}</span>
+              <span className="text-xs text-gray-400">{r.done ? shortDate(r.createdAt) : '進行中'}</span>
             </Link>
           ))}
         </section>

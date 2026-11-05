@@ -55,7 +55,10 @@ export const PassageDraft = z.object({
 })
 export type PassageDraft = z.infer<typeof PassageDraft>
 
-export type Passage = PassageDraft & { id: string; kind: PassageKind; createdAt: string }
+// A word of the passage already saved as a card (from this or an earlier passage).
+export type SavedWord = { index: number; cardId: string }
+
+export type Passage = PassageDraft & { id: string; kind: PassageKind; createdAt: string; saved: SavedWord[] }
 
 export const SaveReadingCardsRequest = z.object({
   // Indexes into `words` of the words the learner misread.

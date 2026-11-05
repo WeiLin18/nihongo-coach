@@ -1,4 +1,4 @@
-import type { Passage, PassageKind } from '@shared/reading'
+import type { Passage, PassageKind, SavedWord } from '@shared/reading'
 import type {
   AskRequest,
   Card,
@@ -73,7 +73,7 @@ export const api = {
     (await request('/reading')).json(),
   passage: async (id: string): Promise<Passage> => (await request(`/reading/${id}`)).json(),
   newPassage: async (kind?: PassageKind): Promise<Passage> => (await request('/reading', json({ kind }))).json(),
-  saveReadingCards: async (id: string, words: number[]): Promise<Card[]> =>
+  saveReadingCards: async (id: string, words: number[]): Promise<SavedWord[]> =>
     (await request(`/reading/${id}/cards`, json({ words }))).json(),
 
   practiceList: async (): Promise<PracticeSummary[]> => (await request('/practice')).json(),

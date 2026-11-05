@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import type { CardDraft, Mode, PracticeKind, PracticeReply, PracticeScenario, WordAccent } from '../../shared/schema'
 import type { PassageDraft, PassageKind } from '../../shared/reading'
 
@@ -76,5 +76,5 @@ export const practiceTurns = sqliteTable(
     cardId: text('card_id'),
     createdAt: text('created_at').notNull(),
   },
-  (t) => [index('practice_turns_session_idx').on(t.sessionId, t.idx)],
+  (t) => [uniqueIndex('practice_turns_session_idx').on(t.sessionId, t.idx)],
 )

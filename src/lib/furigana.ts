@@ -1,8 +1,7 @@
 import { toHiragana } from '@shared/kana'
+import type { RubyPart } from '../components/Ruby'
 
 const KANJI = /[々一-鿿]/
-
-export type RubyPart = { base: string; rt?: string }
 
 // Splits a token like 確かめる / たしかめる into 確[たし] + かめる, so furigana sits only over the kanji.
 // Leading and trailing kana that match the reading are peeled off; the rest keeps the remaining reading.
