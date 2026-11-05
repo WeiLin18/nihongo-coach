@@ -11,6 +11,7 @@ import {
   ReviewRequest,
   SaveCardRequest,
   StartPracticeRequest,
+  TtsRequest,
   type Card,
 } from '../shared/schema'
 import { cards } from './db/schema'
@@ -162,10 +163,10 @@ app.post('/transcribe', async (c) => {
 })
 
 app.post('/tts', async (c) => {
-  const { text } = await c.req.json<{ text?: string }>()
-  if (!text || text.length > 300) return c.json({ error: 'text required (max 300 chars)' }, 400)
+  const parsed = TtsRequest.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
   if (!c.env.AZURE_SPEECH_KEY) return c.json({ error: 'AZURE_SPEECH_KEY not set' }, 501)
-  return c.body(await synthesize(c.env, text), 200, { 'Content-Type': 'audio/mpeg' })
+  return c.body(await synthesize(c.env, parsed.data), 200, { 'Content-Type': 'audio/mpeg' })
 })
 
 app.route('/reading', reading)

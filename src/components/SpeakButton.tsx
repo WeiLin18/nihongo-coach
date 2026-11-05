@@ -1,7 +1,9 @@
 import { useEffect, useId, useState, useSyncExternalStore } from 'react'
+import type { TtsRequest } from '@shared/schema'
 import { speak, speakingOwner, stopSpeaking, subscribeSpeaking } from '../lib/speak'
 
-export function SpeakButton({ text }: { text: string }) {
+// `reading` (one word) or `parts` (a sentence's tokens) lets the server pin readings; see TtsRequest.
+export function SpeakButton({ text, reading, parts }: TtsRequest) {
   const id = useId()
   const playing = useSyncExternalStore(subscribeSpeaking, () => speakingOwner() === id)
   const [fallback, setFallback] = useState(false)
@@ -16,7 +18,7 @@ export function SpeakButton({ text }: { text: string }) {
 
   function toggle() {
     if (playing) return stopSpeaking()
-    void speak(text, id).then((engine) => engine && setFallback(engine === 'browser'))
+    void speak({ text, reading, parts }, id).then((engine) => engine && setFallback(engine === 'browser'))
   }
 
   return (
