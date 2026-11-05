@@ -10,7 +10,7 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 Practice and review. The app now has four tabs (查詢 / 練習 / 複習 / 卡片) and settings in a ☰ menu.
 
-Commits `13731a0..56098b5` (merges of [#1](https://github.com/WeiLin18/nihongo-coach/pull/1) `claude/practice-reading`, the SRS review branch, and the pitch-recording branch).
+Commits `13731a0..` up to the v0.3.0 tag (merges of [#1](https://github.com/WeiLin18/nihongo-coach/pull/1) `claude/practice-reading`, the SRS review branch, and the pitch-recording branch).
 
 ### Added
 
@@ -33,6 +33,7 @@ Commits `13731a0..56098b5` (merges of [#1](https://github.com/WeiLin18/nihongo-c
 - The microphone stops when you leave a page in the middle of recording. (`7d0d3e6`)
 - A second practice reply sent while the first is in flight fails cleanly instead of adding a duplicate turn (unique index, migration 0003). (`7d0d3e6`)
 - Recent lists show dates in local time instead of UTC. (`7d0d3e6`)
+- 🔊 buttons no longer pile up repeated audio on iPhone: one tap plays once, tapping again (⏹) stops it, another 🔊 cuts off the current one, and playback stops when you leave the page. When server TTS isn't configured, the browser voice starts right away instead of asking the server on every tap. (`68c1555`)
 
 ## [0.2.0] - 2026-11-02
 
