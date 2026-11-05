@@ -208,7 +208,7 @@ R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行
 
 > 改了 `database_id` 之後本機會換成一份新的空資料庫，要重跑 `npm run db:migrate:local` 和重音匯入。
 
-第一次部署之後，發版是自動化的：`npm run release -- minor` 打好版本 tag，GitHub Actions 會在你核准後套用 D1 migration 並部署。GitHub 和 Cloudflare 的一次性設定、備份與回滾見 [docs/RELEASING.md](docs/RELEASING.md)。
+第一次部署之後，發版是自動化的：`npm run release -- minor` 打好版本 tag，GitHub Actions 會在你核准後套用 D1 migration 並部署。GitHub 和 Cloudflare 的一次性設定、備份與回滾見 [docs/RELEASING.md](docs/RELEASING.md)。執行成本、免費額度與如何設定花費上限見 [docs/COSTS.md](docs/COSTS.md)。
 
 iPhone Safari 打開部署網址 → 分享 → 加入主畫面。接著照 [docs/ios-shortcuts.md](docs/ios-shortcuts.md) 設定捷徑。
 

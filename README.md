@@ -210,7 +210,7 @@ R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wr
 
 > After you change `database_id`, local dev uses a new empty database; run `npm run db:migrate:local` and the accent import again.
 
-After the first deploy, releases are automated: `npm run release -- minor` tags a version, and a GitHub Actions workflow applies the D1 migrations and deploys it after you approve. [docs/RELEASING.md](docs/RELEASING.md) has the one-time GitHub and Cloudflare setup, backups and rollback.
+After the first deploy, releases are automated: `npm run release -- minor` tags a version, and a GitHub Actions workflow applies the D1 migrations and deploys it after you approve. [docs/RELEASING.md](docs/RELEASING.md) has the one-time GitHub and Cloudflare setup, backups and rollback. What it costs to run, the free-tier limits and how to cap spending: [docs/COSTS.md](docs/COSTS.md).
 
 On the iPhone, open the deployed URL in Safari → Share → Add to Home Screen. Then set up the shortcuts in [docs/ios-shortcuts.md](docs/ios-shortcuts.md) (written in Chinese).
 
