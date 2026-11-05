@@ -6,6 +6,10 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Added
+
+- [docs/COSTS.md](docs/COSTS.md): measured cost per action and per month, the free-tier and rate limits of each service, and how to cap spending.
+
 ## [0.4.0] - 2026-11-05
 
 ### Added
