@@ -8,6 +8,7 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ### Added
 
+- **Automated releases**: CI on every pull request and on `main` (lint, type check, build, pitch check, and a new migration-numbering check, `npm run check` locally). `npm run release -- <patch|minor|major>` bumps the version, moves these notes under a dated heading, commits, tags and pushes after a prompt. Pushing a `vX.Y.Z` tag creates the GitHub Release and, after approval on the `production` environment, applies remote D1 migrations and deploys. `npm run backup` exports the remote database to the git-ignored `backups/`. See [docs/RELEASING.md](docs/RELEASING.md).
 - 🔊 on each sentence and each tricky word in 練習 → 讀音, shown after 顯示讀音.
 
 ### Changed

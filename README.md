@@ -210,7 +210,7 @@ R2 (audio cache) is optional: enable R2 in the Cloudflare dashboard, run `npx wr
 
 > After you change `database_id`, local dev uses a new empty database; run `npm run db:migrate:local` and the accent import again.
 
-To update an existing deployment (back up D1, apply new migrations, deploy from a tag), follow [docs/RELEASING.md](docs/RELEASING.md).
+After the first deploy, releases are automated: `npm run release -- minor` tags a version, and a GitHub Actions workflow applies the D1 migrations and deploys it after you approve. [docs/RELEASING.md](docs/RELEASING.md) has the one-time GitHub and Cloudflare setup, backups and rollback.
 
 On the iPhone, open the deployed URL in Safari → Share → Add to Home Screen. Then set up the shortcuts in [docs/ios-shortcuts.md](docs/ios-shortcuts.md) (written in Chinese).
 
@@ -285,7 +285,7 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 
 ## Version history
 
-Releases are listed in [CHANGELOG.md](CHANGELOG.md): 0.1.0 (Phase 1 MVP), 0.2.0 (streaming, `/jp`, MCP, demo mode, public release), 0.3.0 (practice, reading, review, pitch recording). [docs/RELEASING.md](docs/RELEASING.md) describes how a release is tagged and deployed, including the D1 backup and migration steps.
+Releases are listed in [CHANGELOG.md](CHANGELOG.md): 0.1.0 (Phase 1 MVP), 0.2.0 (streaming, `/jp`, MCP, demo mode, public release), 0.3.0 (practice, reading, review, pitch recording). [docs/RELEASING.md](docs/RELEASING.md) describes the release flow: CI on every PR, `npm run release`, and the tag-triggered deploy with D1 migrations.
 
 ## License
 

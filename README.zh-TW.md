@@ -208,7 +208,7 @@ R2（示範音快取）是選用的：先在 Cloudflare 後台開通 R2，執行
 
 > 改了 `database_id` 之後本機會換成一份新的空資料庫，要重跑 `npm run db:migrate:local` 和重音匯入。
 
-之後更新已部署的版本（備份 D1、套用新的 migration、從 tag 部署）請照 [docs/RELEASING.md](docs/RELEASING.md)。
+第一次部署之後，發版是自動化的：`npm run release -- minor` 打好版本 tag，GitHub Actions 會在你核准後套用 D1 migration 並部署。GitHub 和 Cloudflare 的一次性設定、備份與回滾見 [docs/RELEASING.md](docs/RELEASING.md)。
 
 iPhone Safari 打開部署網址 → 分享 → 加入主畫面。接著照 [docs/ios-shortcuts.md](docs/ios-shortcuts.md) 設定捷徑。
 
@@ -281,7 +281,7 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 
 ## 版本紀錄
 
-各版本內容見 [CHANGELOG.md](CHANGELOG.md)：0.1.0（Phase 1 MVP）、0.2.0（串流、`/jp`、MCP、demo 模式、公開 repo）、0.3.0（會話練習、讀音練習、開口複習、錄音比對）。打 tag 和部署的流程（含 D1 備份與 migration）見 [docs/RELEASING.md](docs/RELEASING.md)。
+各版本內容見 [CHANGELOG.md](CHANGELOG.md)：0.1.0（Phase 1 MVP）、0.2.0（串流、`/jp`、MCP、demo 模式、公開 repo）、0.3.0（會話練習、讀音練習、開口複習、錄音比對）。發版流程（PR 的 CI、`npm run release`、tag 觸發的部署與 D1 migration）見 [docs/RELEASING.md](docs/RELEASING.md)。
 
 ## 授權
 
