@@ -214,11 +214,17 @@ iPhone Safari 打開部署網址 → 分享 → 加入主畫面。接著照 [doc
 
 ## 電腦上用訂閱額度：`/jp` skill
 
-在電腦上用 Claude Code 時，可以用訂閱額度產生卡片，不花 API 費用，卡片一樣存進 App、手機上看得到。
+在電腦上用 Claude Code 或 Codex 時，可以用訂閱額度產生卡片，不花 API 費用，卡片一樣存進 App、手機上看得到。
 
 ```bash
-ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # 安裝一次，所有專案都能用
+ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # Claude Code：安裝一次，所有專案都能用
 ```
+
+```bash
+ln -s "$PWD/skills/jp" ~/.agents/skills/jp   # Codex（CLI 和 ChatGPT 桌面 App）：同一份檔案
+```
+
+在 Codex 裡改用 `$jp` 呼叫。第一次執行 `curl` 需要網路權限，Codex 詢問時按允許。
 
 在任何 Claude Code 對話裡：
 
@@ -228,13 +234,13 @@ ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # 安裝一次，所有專案都能
 /jp 查 推し活
 ```
 
-不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；網址和 token 從 `.prod.vars` 讀，token 不會印出來。
+不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；網址和 token 從 `.prod.vars` 讀，token 不會印出來。卡片來源標為 `claude-code` 或 `codex`。
 
 ## 手機 Claude App：MCP connector
 
 Worker 在 `/mcp/<MCP_TOKEN>` 提供一個 MCP server（Streamable HTTP，無狀態），有兩個工具：
 
-- `save_card`：Claude 照 App 的規則寫好卡片後存進來，伺服器補重音（來源標為 `claude-app`）
+- `save_card`：Claude 照 App 的規則寫好卡片後存進來，伺服器補重音（來源標為 `claude-app`，加 `?source=chatgpt` 時標為 `chatgpt`）
 - `list_cards`：讀最近存的卡片，可依分類或文字篩選
 
 claude.ai 的自訂 connector 只能填網址，所以密鑰放在路徑裡；網址錯誤一律回 404。
@@ -249,6 +255,15 @@ claude.ai 的自訂 connector 只能填網址，所以密鑰放在路徑裡；�
 ```bash
 npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method tools/list
 ```
+
+## ChatGPT：語音口說練習和存卡
+
+ChatGPT 個人方案（Plus、Pro）不能接會寫入資料的自訂 MCP server，custom GPT 也會在 2026/12/11 退場，所以分成兩部分：
+
+- 一個 **ChatGPT Project**，指示貼 [integrations/chatgpt/project-instructions.md](integrations/chatgpt/project-instructions.md)，用語音模式練對話。規則跟 App 的會話練習一樣，不會評論重音。
+- 一個私人的 **ChatGPT Site**，上面架一個小 MCP proxy 轉發到 `/mcp/<MCP_TOKEN>?source=chatgpt`，ChatGPT 會把它變成個人 plugin。建置提示詞在 [integrations/chatgpt/site-prompt.md](integrations/chatgpt/site-prompt.md)。`MCP_URL` 存在 Site 的 secret，不進 repo。
+
+練完在文字對話裡說「存卡」，修正過的句子會存成卡片，來源標為 `chatgpt`。完整設定步驟：[integrations/chatgpt/README.md](integrations/chatgpt/README.md)。
 
 ## API
 
