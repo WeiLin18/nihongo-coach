@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Ruby } from '../components/Ruby'
 import { SpeakButton } from '../components/SpeakButton'
+import { TodayBadge } from '../components/TodayBadge'
 import { api, type DeepPartial, type PracticeSummary } from '../lib/api'
-import { shortDate } from '../lib/date'
+import { localDate, shortDate, todayQueue } from '../lib/date'
 import { useRecorder } from '../lib/useRecorder'
 
 const VERDICTS = {
@@ -95,17 +96,35 @@ export function Practice() {
   const [draftScene, setDraftScene] = useState<DeepPartial<PracticeSession['scenario']> | null>(null)
   const [pending, setPending] = useState<{ text: string; reply: DeepPartial<PracticeReply> } | null>(null)
   const [recent, setRecent] = useState<PracticeSummary[]>([])
+  // The list holds today's queue, so 開始 waits for it on the start screen.
+  const [listed, setListed] = useState(false)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState<'starting' | 'listening' | 'thinking' | null>(null)
   const [error, setError] = useState('')
 
   // Load the session in the URL (e.g. from the recent list or after a reload).
   useEffect(() => {
-    if (!id) api.practiceList().then(setRecent, () => {})
+    if (!id)
+      api
+        .practiceList()
+        .then(setRecent, () => {})
+        .finally(() => setListed(true))
     else if (loaded?.id !== id) api.practice(id).then(setSession, (e: Error) => setError(e.message))
   }, [id, loaded?.id])
 
+  // Drills prepared for today come first; 開始 opens the first one of the chosen kind.
+  const queue = todayQueue(recent)
+  const next = queue.find((r) => !kind || r.kind === kind)
+  const older = recent.filter((r) => !queue.includes(r))
+
   async function start() {
+    if (next) {
+      // Opening it marks it used on the server; drop it here too so 換一題 moves on.
+      setRecent((list) => list.map((r) => (r.id === next.id ? { ...r, openedAt: new Date().toISOString() } : r)))
+      setError('')
+      setParams({ id: next.id })
+      return
+    }
     setBusy('starting')
     setError('')
     setParams({})
@@ -178,7 +197,7 @@ export function Practice() {
             </button>
           ))}
         </div>
-        <button onClick={start} disabled={busy !== null} className="h-11 rounded-lg bg-rose-500 px-4 text-sm text-white disabled:opacity-40">
+        <button onClick={start} disabled={busy !== null || (!id && !listed)} className="h-11 rounded-lg bg-rose-500 px-4 text-sm text-white disabled:opacity-40">
           {busy === 'starting' ? '出題中…' : session ? '換一題' : '開始'}
         </button>
       </div>
@@ -188,6 +207,7 @@ export function Practice() {
       {scene && (
         <section className="space-y-1 rounded-xl bg-rose-50/60 p-4 text-sm">
           <div className="flex items-center gap-2">
+            {session?.preparedFor === localDate() && <TodayBadge />}
             {session && <span className="rounded bg-raised px-2 py-0.5 text-xs text-rose-700">{PRACTICE_KIND_LABELS[session.kind]}</span>}
             <h2 className="text-base font-semibold">{scene.title}</h2>
           </div>
@@ -263,11 +283,30 @@ export function Practice() {
         </div>
       )}
 
+      {!id && !scene && queue.length > 0 && (
+        <section className="space-y-2">
+          {queue.map((r) => (
+            <Link key={r.id} to={`/practice?id=${r.id}`} className="block rounded-xl bg-rose-50/60 p-3 active:bg-rose-100">
+              <span className="flex items-center gap-2">
+                <TodayBadge />
+                <span className="rounded bg-raised px-1.5 py-0.5 text-xs text-rose-700">{PRACTICE_KIND_LABELS[r.kind]}</span>
+                <span className="min-w-0 flex-1 truncate font-semibold">{r.scenario.title}</span>
+              </span>
+              <span className="mt-1 block text-sm text-gray-600">{r.scenario.goal}</span>
+            </Link>
+          ))}
+        </section>
+      )}
+
       {!id && !scene && (
         <section className="space-y-2">
-          <p className="text-sm text-gray-500">每次一個工作或生活場景，3–4 來回，用日文回答後幫你改成自然的說法。</p>
-          {recent.length > 0 && <h3 className="pt-2 text-sm font-semibold text-gray-500">最近的練習</h3>}
-          {recent.map((r) => (
+          <p className="text-sm text-gray-500">
+            {next
+              ? `今天準備好的練習還有 ${queue.length} 題，按開始從${PRACTICE_KIND_LABELS[next.kind]}場景練起；用完後改回即時出題。`
+              : '每次一個工作或生活場景，3–4 來回，用日文回答後幫你改成自然的說法。'}
+          </p>
+          {older.length > 0 && <h3 className="pt-2 text-sm font-semibold text-gray-500">最近的練習</h3>}
+          {older.map((r) => (
             <Link key={r.id} to={`/practice?id=${r.id}`} className="flex items-center gap-2 border-b py-2 text-sm">
               <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{PRACTICE_KIND_LABELS[r.kind]}</span>
               <span className="flex-1 truncate">{r.scenario.title}</span>

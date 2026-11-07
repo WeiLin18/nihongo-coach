@@ -1,7 +1,7 @@
-import { and, desc, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { zodTextFormat } from 'openai/helpers/zod'
-import { PassageDraft, type Passage, type PassageKind, type SavedWord } from '../../shared/reading'
+import { PassageDraft, type Passage, type PassageKind, type PassageSummary, type SavedWord, type SavePassageRequest } from '../../shared/reading'
 import type { CardDraft } from '../../shared/schema'
 import { cards, passages } from '../db/schema'
 import { parseStructured } from './ai'
@@ -70,9 +70,46 @@ export async function generatePassage(env: Env, requested?: PassageKind): Promis
       PassageDraft,
     ),
   )
-  const row = { id: crypto.randomUUID(), kind, topic: draft.topic, draft, createdAt: new Date().toISOString() }
+  const row = { ...NOT_PREPARED, id: crypto.randomUUID(), kind, topic: draft.topic, draft, createdAt: new Date().toISOString() }
   await drizzle(env.DB).insert(passages).values(row)
   return { ...toPassage(row), saved: [] }
+}
+
+const NOT_PREPARED = { source: null, preparedFor: null, dailyKey: null, openedAt: null, sourceUrl: null }
+
+// Saves a passage written elsewhere (the /jp-daily skill), so no API call is made here.
+// The same source + date + slot is saved once: a second save returns the first passage.
+export async function savePreparedPassage(env: Env, req: SavePassageRequest): Promise<{ created: boolean; passage: Passage }> {
+  const draft = alignSurfaces(req.draft)
+  const dailyKey = `${req.source}:${req.date}:${req.slot}`
+  const inserted = await drizzle(env.DB)
+    .insert(passages)
+    .values({
+      id: crypto.randomUUID(),
+      kind: req.kind,
+      topic: draft.topic,
+      draft,
+      createdAt: new Date().toISOString(),
+      source: req.source,
+      preparedFor: req.date,
+      dailyKey,
+      openedAt: null,
+      sourceUrl: req.sourceUrl ?? null,
+    })
+    .onConflictDoNothing({ target: passages.dailyKey })
+    .returning({ id: passages.id })
+  const id = inserted[0]?.id ?? (await drizzle(env.DB).select({ id: passages.id }).from(passages).where(eq(passages.dailyKey, dailyKey)).get())?.id
+  const passage = id && (await getPassage(env, id))
+  if (!passage) throw new Error('prepared passage not found after saving')
+  return { created: inserted.length > 0, passage }
+}
+
+// Takes a prepared passage out of the 今日 queue the first time the learner opens it.
+export async function markPassageOpened(env: Env, id: string) {
+  await drizzle(env.DB)
+    .update(passages)
+    .set({ openedAt: new Date().toISOString() })
+    .where(and(eq(passages.id, id), isNull(passages.openedAt)))
 }
 
 type Sentence = PassageDraft['sentences'][number]
@@ -92,7 +129,16 @@ function alignSurfaces(draft: PassageDraft): PassageDraft {
   return { ...draft, words }
 }
 
-const toPassage = (r: typeof passages.$inferSelect): Omit<Passage, 'saved'> => ({ ...r.draft, id: r.id, kind: r.kind, createdAt: r.createdAt })
+const toPassage = (r: typeof passages.$inferSelect): Omit<Passage, 'saved'> => ({
+  ...r.draft,
+  id: r.id,
+  kind: r.kind,
+  createdAt: r.createdAt,
+  source: r.source,
+  preparedFor: r.preparedFor,
+  openedAt: r.openedAt,
+  sourceUrl: r.sourceUrl,
+})
 
 // Words of the passage that already have a reading card, matched by dictionary form.
 async function savedWords(env: Env, words: PassageDraft['words']): Promise<SavedWord[]> {
@@ -113,9 +159,19 @@ export async function getPassage(env: Env, id: string): Promise<Passage | null> 
   return { ...passage, saved: await savedWords(env, passage.words) }
 }
 
-export async function listPassages(env: Env, limit = 20): Promise<Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt'>[]> {
+export async function listPassages(env: Env, limit = 20): Promise<PassageSummary[]> {
   const rows = await drizzle(env.DB).select().from(passages).orderBy(desc(passages.createdAt)).limit(limit)
-  return rows.map(({ id, kind, topic, draft, createdAt }) => ({ id, kind, topic, title: draft.title, createdAt }))
+  return rows.map(({ id, kind, topic, draft, createdAt, source, preparedFor, openedAt, dailyKey }) => ({
+    id,
+    kind,
+    topic,
+    title: draft.title,
+    createdAt,
+    source,
+    preparedFor,
+    openedAt,
+    dailyKey,
+  }))
 }
 
 // Turns misread words into lookup cards, with the passage sentence as the first example.

@@ -1,14 +1,13 @@
-import { KIND_LABELS, PASSAGE_KINDS, type Passage, type PassageKind } from '@shared/reading'
+import { KIND_LABELS, PASSAGE_KINDS, type Passage, type PassageKind, type PassageSummary } from '@shared/reading'
 import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { RubyParts } from '../components/Ruby'
 import { SpeakButton } from '../components/SpeakButton'
+import { TodayBadge } from '../components/TodayBadge'
 import { api } from '../lib/api'
-import { shortDate } from '../lib/date'
+import { localDate, shortDate, todayQueue } from '../lib/date'
 import { rubyParts } from '../lib/furigana'
 import { useRecorder } from '../lib/useRecorder'
-
-type Summary = Awaited<ReturnType<typeof api.passages>>[number]
 
 export function Reading() {
   const { id } = useParams()
@@ -20,13 +19,23 @@ function ReadingHome() {
   const [kind, setKind] = useState<PassageKind | undefined>()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [recent, setRecent] = useState<Summary[]>([])
+  const [recent, setRecent] = useState<PassageSummary[]>([])
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    api.passages().then(setRecent, (e: Error) => setError(e.message))
+    api
+      .passages()
+      .then(setRecent, (e: Error) => setError(e.message))
+      .finally(() => setLoaded(true))
   }, [])
 
+  // Passages prepared for today come first; 開始 opens the first one of the chosen kind.
+  const queue = todayQueue(recent)
+  const next = queue.find((p) => !kind || p.kind === kind)
+  const older = recent.filter((p) => !queue.includes(p))
+
   async function generate() {
+    if (next) return navigate(`/reading/${next.id}`)
     setBusy(true)
     setError('')
     try {
@@ -52,19 +61,38 @@ function ReadingHome() {
             </button>
           ))}
         </div>
-        <button onClick={generate} disabled={busy} className="h-11 rounded-lg bg-rose-500 px-4 text-sm text-white disabled:opacity-40">
+        <button onClick={generate} disabled={busy || !loaded} className="h-11 rounded-lg bg-rose-500 px-4 text-sm text-white disabled:opacity-40">
           {busy ? '出題中…' : '開始'}
         </button>
       </div>
 
       {error && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
+      {queue.length > 0 && (
+        <section className="space-y-2">
+          {queue.map((p) => (
+            <Link key={p.id} to={`/reading/${p.id}`} className="block rounded-xl bg-rose-50/60 p-3 active:bg-rose-100">
+              <span className="flex items-center gap-2">
+                <TodayBadge />
+                <span className="rounded bg-raised px-1.5 py-0.5 text-xs text-rose-700">{KIND_LABELS[p.kind]}</span>
+                <span className="min-w-0 flex-1 truncate font-semibold">{p.title}</span>
+              </span>
+              <span className="mt-1 block text-sm text-gray-600">{p.topic}</span>
+            </Link>
+          ))}
+        </section>
+      )}
+
       <section className="space-y-2">
         <p className="text-sm text-gray-500">
-          {busy ? '產生短文中，約 20–30 秒…' : '一段含易錯漢字的對話或新聞稿。先不看假名唸一遍，再顯示讀音，把唸錯的字存成卡片。'}
+          {busy
+            ? '產生短文中，約 20–30 秒…'
+            : next
+              ? `今天準備好的短文還有 ${queue.length} 篇，按開始從${KIND_LABELS[next.kind]}唸起；用完後改回即時出題。`
+              : '一段含易錯漢字的對話或新聞稿。先不看假名唸一遍，再顯示讀音，把唸錯的字存成卡片。'}
         </p>
-        {recent.length > 0 && <h3 className="pt-2 text-sm font-semibold text-gray-500">最近的短文</h3>}
-        {recent.map((p) => (
+        {older.length > 0 && <h3 className="pt-2 text-sm font-semibold text-gray-500">最近的短文</h3>}
+        {older.map((p) => (
           <Link key={p.id} to={`/reading/${p.id}`} className="flex items-center gap-2 border-b py-2 text-sm">
             <span className="rounded bg-gray-100 px-2 py-0.5 text-xs">{KIND_LABELS[p.kind]}</span>
             <span className="flex-1 truncate">{p.title}</span>
@@ -133,8 +161,9 @@ function PassageView({ id }: { id: string }) {
     <div className="space-y-5">
       <header>
         <h1 className="text-xl font-bold">{passage.title}</h1>
-        <p className="mt-1 text-xs text-gray-500">
-          <span className="mr-2 rounded bg-gray-100 px-1.5 py-0.5">{KIND_LABELS[passage.kind]}</span>
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+          {passage.preparedFor === localDate() && <TodayBadge />}
+          <span className="rounded bg-gray-100 px-1.5 py-0.5">{KIND_LABELS[passage.kind]}</span>
           {passage.category}
         </p>
       </header>
@@ -248,6 +277,15 @@ function PassageView({ id }: { id: string }) {
       )}
 
       {error && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+
+      {passage.sourceUrl && (
+        <p className="text-xs text-gray-500">
+          改寫自新聞：
+          <a href={passage.sourceUrl} target="_blank" rel="noreferrer" className="break-all text-rose-600 underline">
+            {new URL(passage.sourceUrl).hostname}
+          </a>
+        </p>
+      )}
 
       <button onClick={() => navigate('/reading')} className="h-11 w-full rounded-lg border text-sm">
         換一篇

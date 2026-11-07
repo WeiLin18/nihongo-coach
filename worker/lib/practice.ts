@@ -1,4 +1,4 @@
-import { asc, desc, eq, gte } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, isNull } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { zodTextFormat } from 'openai/helpers/zod'
 import {
@@ -8,6 +8,7 @@ import {
   type PracticeKind,
   type PracticeSession,
   type PracticeTurn,
+  type SavePracticeRequest,
 } from '../../shared/schema'
 import { stripRuby } from '../../shared/format'
 import { cards, practiceSessions, practiceTurns } from '../db/schema'
@@ -128,14 +129,62 @@ export async function startPractice(
     onDelta,
   )
 
-  const row = { id: crypto.randomUUID(), kind, theme, scenario, done: false, createdAt: new Date().toISOString() }
+  const row = {
+    id: crypto.randomUUID(),
+    kind,
+    theme,
+    scenario,
+    done: false,
+    createdAt: new Date().toISOString(),
+    source: null,
+    preparedFor: null,
+    dailyKey: null,
+    openedAt: null,
+  }
   await db(env).insert(practiceSessions).values(row)
   return { ...row, turns: [] }
 }
 
+// Saves a drill written elsewhere (the /jp-daily skill), so no API call is made here.
+// The same source + date + slot is saved once: a second save returns the first drill.
+export async function savePreparedPractice(env: Env, req: SavePracticeRequest): Promise<{ created: boolean; session: PracticeSession }> {
+  const dailyKey = `${req.source}:${req.date}:${req.slot}`
+  const inserted = await db(env)
+    .insert(practiceSessions)
+    .values({
+      id: crypto.randomUUID(),
+      kind: req.kind,
+      theme: req.theme,
+      scenario: req.scenario,
+      done: false,
+      createdAt: new Date().toISOString(),
+      source: req.source,
+      preparedFor: req.date,
+      dailyKey,
+      openedAt: null,
+    })
+    .onConflictDoNothing({ target: practiceSessions.dailyKey })
+    .returning({ id: practiceSessions.id })
+  const id =
+    inserted[0]?.id ??
+    (await db(env).select({ id: practiceSessions.id }).from(practiceSessions).where(eq(practiceSessions.dailyKey, dailyKey)).get())?.id
+  const session = id && (await getPractice(env, id))
+  if (!session) throw new Error('prepared drill not found after saving')
+  return { created: inserted.length > 0, session }
+}
+
+// Takes a prepared drill out of the 今日 queue the first time the learner opens it.
+export async function markPracticeOpened(env: Env, id: string) {
+  await db(env)
+    .update(practiceSessions)
+    .set({ openedAt: new Date().toISOString() })
+    .where(and(eq(practiceSessions.id, id), isNull(practiceSessions.openedAt)))
+}
+
 export async function getPractice(env: Env, id: string): Promise<PracticeSession | null> {
-  const session = await db(env).select().from(practiceSessions).where(eq(practiceSessions.id, id)).get()
-  if (!session) return null
+  const row = await db(env).select().from(practiceSessions).where(eq(practiceSessions.id, id)).get()
+  if (!row) return null
+  const { dailyKey: _, ...session } = row
   const turns = await db(env)
     .select({
       id: practiceTurns.id,
@@ -157,8 +206,13 @@ export async function listPractice(env: Env, limit: number) {
       id: practiceSessions.id,
       kind: practiceSessions.kind,
       scenario: practiceSessions.scenario,
+      theme: practiceSessions.theme,
       done: practiceSessions.done,
       createdAt: practiceSessions.createdAt,
+      source: practiceSessions.source,
+      preparedFor: practiceSessions.preparedFor,
+      openedAt: practiceSessions.openedAt,
+      dailyKey: practiceSessions.dailyKey,
     })
     .from(practiceSessions)
     .orderBy(desc(practiceSessions.createdAt))

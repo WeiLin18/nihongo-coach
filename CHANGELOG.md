@@ -9,11 +9,17 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 ### Added
 
 - **Dark mode**: the app follows the system light/dark setting (it used to stay white). ☰ → 設定 → 外觀 picks 跟隨系統, 淺色 or 深色, stored on this device. The pitch-accent and 錄音比對 charts, inputs, badges and borders all have dark colours; light mode looks the same as before.
-- [docs/COSTS.md](docs/COSTS.md): measured cost per action and per month, the free-tier and rate limits of each service, and how to cap spending.
 
 ### Changed
 
 - On wide screens the bottom tab bar keeps its four tabs within the content width instead of spreading them across the window.
+
+## [0.5.0] - 2026-11-07
+
+### Added
+
+- **今日 queue and the `/jp-daily` skill**: `/jp-daily` writes the day's practice in Claude Code on the subscription (a news reading passage rewritten from today's Japanese news with a source link, a work-report passage, and 1–2 會話 drills) and saves it with the new `POST /api/reading/prepared` and `POST /api/practice/prepared`, which validate with the same schemas as generated content and call no AI. Saves are idempotent per `source` + `date` + `slot`. 練習 → 讀音 and 會話 list today's unopened items first with a 今日 label, and 開始 opens them before generating on demand. Migration `0005_prepared_content` adds `source`, `prepared_for`, `daily_key`, `opened_at` (and `source_url` on passages). Scheduling: [docs/daily-content.md](docs/daily-content.md).
+- [docs/COSTS.md](docs/COSTS.md): measured cost per action and per month, the free-tier and rate limits of each service, and how to cap spending.
 
 ## [0.4.0] - 2026-11-05
 
@@ -92,7 +98,8 @@ Phase 1 MVP. Commit `a548a9f`.
 - iOS Shortcuts for the share sheet and screenshots (`docs/ios-shortcuts.md`).
 - Vite + React PWA and a Hono API on Cloudflare Workers with D1 (migration `0000_init`).
 
-[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.1.0...v0.2.0

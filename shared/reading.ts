@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CATEGORIES } from './schema'
+import { CATEGORIES, PreparedFields, type PreparedInfo } from './schema'
 
 export const PASSAGE_KINDS = ['conversation', 'news'] as const
 export type PassageKind = (typeof PASSAGE_KINDS)[number]
@@ -58,7 +58,28 @@ export type PassageDraft = z.infer<typeof PassageDraft>
 // A word of the passage already saved as a card (from this or an earlier passage).
 export type SavedWord = { index: number; cardId: string }
 
-export type Passage = PassageDraft & { id: string; kind: PassageKind; createdAt: string; saved: SavedWord[] }
+export type Passage = PassageDraft &
+  PreparedInfo & {
+    id: string
+    kind: PassageKind
+    createdAt: string
+    // The news article a prepared passage was rewritten from.
+    sourceUrl: string | null
+    saved: SavedWord[]
+  }
+
+export type PassageSummary = Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt' | 'source' | 'preparedFor' | 'openedAt'> & {
+  dailyKey: string | null
+}
+
+// A passage someone else already wrote, saved without calling the AI.
+export const SavePassageRequest = z.object({
+  ...PreparedFields,
+  kind: z.enum(PASSAGE_KINDS),
+  sourceUrl: z.url({ protocol: /^https?$/ }).max(500).optional(),
+  draft: PassageDraft,
+})
+export type SavePassageRequest = z.infer<typeof SavePassageRequest>
 
 export const SaveReadingCardsRequest = z.object({
   // Indexes into `words` of the words the learner misread.
