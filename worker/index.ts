@@ -10,6 +10,7 @@ import {
   PracticeTurnRequest,
   ReviewRequest,
   SaveCardRequest,
+  SavePracticeRequest,
   StartPracticeRequest,
   TtsRequest,
   type Card,
@@ -20,7 +21,15 @@ import { listCards, saveCard, toCard } from './lib/cards'
 import { reviewQueue, reviewStats, submitReview } from './lib/review'
 import { mcp } from './mcp'
 import { reading } from './reading'
-import { getPractice, listPractice, replyPractice, saveTurnCard, startPractice } from './lib/practice'
+import {
+  getPractice,
+  listPractice,
+  markPracticeOpened,
+  replyPractice,
+  savePreparedPractice,
+  saveTurnCard,
+  startPractice,
+} from './lib/practice'
 import { draftCard, RefusalError, streamCard } from './lib/ai'
 import { transcribe } from './lib/transcribe'
 import { synthesize } from './lib/tts'
@@ -109,9 +118,21 @@ app.post('/practice', async (c) => {
   return streamJob(c, 'session', (onDelta) => startPractice(c.env, parsed.data.kind, onDelta))
 })
 
+// Save a drill someone else already wrote (the /jp-daily skill), without an API call.
+// 201 when saved, 200 with the existing drill when this source + date + slot was saved before.
+app.post('/practice/prepared', async (c) => {
+  const parsed = SavePracticeRequest.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  const result = await savePreparedPractice(c.env, parsed.data)
+  return c.json(result, result.created ? 201 : 200)
+})
+
+// The app opening a drill takes it out of the 今日 queue; ?peek=1 reads it without that.
 app.get('/practice/:id', async (c) => {
   const session = await getPractice(c.env, c.req.param('id'))
-  return session ? c.json(session) : c.json({ error: 'not found' }, 404)
+  if (!session) return c.json({ error: 'not found' }, 404)
+  if (session.preparedFor && !session.openedAt && c.req.query('peek') !== '1') await markPracticeOpened(c.env, session.id)
+  return c.json(session)
 })
 
 app.post('/practice/:id/turns', async (c) => {

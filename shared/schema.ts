@@ -80,6 +80,20 @@ export const SaveCardRequest = z.object({
 })
 export type SaveCardRequest = z.infer<typeof SaveCardRequest>
 
+// Content written ahead of time (e.g. by the /jp-daily skill) for the 今日 queue.
+// Saving the same source + date + slot again returns the existing item instead of adding one.
+export const PreparedFields = {
+  date: z.iso.date().describe("The learner's local date the item is for, YYYY-MM-DD"),
+  slot: z
+    .string()
+    .regex(/^[a-z0-9-]{1,30}$/)
+    .describe('Which item of the day, e.g. news, work, drill-1'),
+  source: z.string().regex(/^[a-z0-9-]{1,50}$/).default('claude-daily'),
+}
+
+// Set on prepared items; all null for items generated in the app.
+export type PreparedInfo = { source: string | null; preparedFor: string | null; openedAt: string | null }
+
 export type WordAccent = {
   surface: string
   reading: string
@@ -144,6 +158,15 @@ export const PracticeReply = z.object({
 export type PracticeReply = z.infer<typeof PracticeReply>
 
 export const StartPracticeRequest = z.object({ kind: z.enum(PRACTICE_KINDS).optional() })
+
+// A drill someone else already wrote, saved without calling the AI.
+export const SavePracticeRequest = z.object({
+  ...PreparedFields,
+  kind: z.enum(PRACTICE_KINDS),
+  theme: z.string().trim().min(1).max(60).describe('Seed theme, e.g. one of the THEMES in worker/lib/practice.ts'),
+  scenario: PracticeScenario,
+})
+export type SavePracticeRequest = z.infer<typeof SavePracticeRequest>
 export const PracticeTurnRequest = z.object({ text: z.string().trim().min(1).max(500) })
 
 export type PracticeTurn = {
@@ -155,7 +178,7 @@ export type PracticeTurn = {
   createdAt: string
 }
 
-export type PracticeSession = {
+export type PracticeSession = PreparedInfo & {
   id: string
   kind: PracticeKind
   theme: string

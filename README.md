@@ -79,6 +79,7 @@ Each drill opens with a scene, your role, and the other person's first line, wit
 - About 3–4 exchanges, then a short wrap-up with expressions to remember.
 - **＋ 存成卡片** turns a correction into a regular Fix it card (source `practice`), with pitch accents, so it shows up in your cards and in review.
 - Scenes mix work (progress reports, spec questions, review requests, priorities, release talks, failing E2E tests, …) and daily life (shopping, restaurants, housing, hobbies, …), about 4 work to 3 life a week. Themes rotate, and recent drills are passed to the prompt to avoid repeats. Pick 工作 or 生活 to choose yourself.
+- Drills prepared by [`/jp-daily`](#daily-practice-from-your-subscription-the-jp-daily-skill) come first, marked 今日.
 
 Prompts are in [worker/lib/practice.ts](worker/lib/practice.ts); the model is `OPENAI_MODEL_PRACTICE` in `wrangler.jsonc`.
 
@@ -90,7 +91,7 @@ A short passage, alternating between a dialogue (對話) and a news-style report
 2. Tap **顯示讀音** (show readings): every kanji word gets furigana, each sentence gets a Chinese translation, and the tricky words are listed with reading, meaning, and why they're misread. 🔊 plays each sentence and each tricky word with the reading pinned, so 重複 is never read じゅうふく.
 3. Tap the words you got wrong, in the passage or the list, and save them as cards in one tap (source `reading`, with the passage sentence as an example and dictionary pitch accent).
 
-Recent topics and words are kept in D1 so the next passage doesn't repeat them. Speech-to-text isn't used to grade, because it writes kanji back and can't tell how you read them.
+Passages prepared by [`/jp-daily`](#daily-practice-from-your-subscription-the-jp-daily-skill) come first, marked 今日; a news passage links to the article it was rewritten from. Recent topics and words are kept in D1 so the next passage doesn't repeat them. Speech-to-text isn't used to grade, because it writes kanji back and can't tell how you read them.
 
 ### 複習 (Speaking review, SRS)
 
@@ -113,6 +114,7 @@ Every saved card (app, `/jp`, MCP) joins the queue automatically. Due cards come
 
 - **One tap from any app**: an iOS Shortcut in the share sheet looks up selected text or a screenshot (with built-in OCR). See [docs/ios-shortcuts.md](docs/ios-shortcuts.md).
 - **Uses your subscription on the computer**: the Claude Code [`/jp` skill](#use-your-subscription-on-the-computer-the-jp-skill) writes the card and saves it to the app, with no API cost.
+- **Practice ready every morning**: the [`/jp-daily` skill](#daily-practice-from-your-subscription-the-jp-daily-skill) prepares a news passage, a work passage, and 1–2 drills, marked 今日 in the app.
 - **Claude mobile app**: an [MCP connector](#claude-mobile-app-mcp-connector) lets Claude save cards from any conversation.
 
 ## Architecture
@@ -232,6 +234,31 @@ In any Claude Code conversation:
 
 `說` is Say it, `改` is Fix it, and `查` is Look up; without one, the mode is picked automatically. Text after `@` is the situation. The skill reads the prompt in `worker/lib/ai.ts` and the schema in `shared/schema.ts`, so it follows the same rules as the app. The URL and token come from `.prod.vars`, and the token is never printed.
 
+## Daily practice from your subscription: the `/jp-daily` skill
+
+`/jp-daily` writes the day's practice in Claude Code and saves it to the app, so it is ready when you open 練習 in the morning:
+
+- a **news** reading passage: today's Japanese news, rewritten in its own words at N1 level for reading aloud, with a link to the article (never copied text)
+- a **work** reading passage: a fictional front-end team (進捗報告, レビュー依頼, 仕様確認, リリース相談, …)
+- **1–2 會話 drills**, following the 4 work / 3 life weekly mix and avoiding recent drills
+
+The skill reads the app's own prompts and schemas (`worker/lib/reading.ts`, `worker/lib/practice.ts`, `shared/`), so prepared items look exactly like generated ones. It saves through `POST /api/reading/prepared` and `POST /api/practice/prepared`, which call no AI. Each item has a slot per day (`news`, `work`, `drill-1`, `drill-2`), so running it twice the same day adds nothing.
+
+In the app, 讀音 and 會話 list today's unopened items first with a **今日** label, and 開始 opens them in order (for the kind you picked). Once they are opened, 開始 generates on demand as before. Correcting your answers in 會話 still uses the OpenAI API.
+
+```bash
+ln -s "$PWD/skills/jp-daily" ~/.claude/skills/jp-daily   # install once
+```
+
+```
+/jp-daily                    # everything for today
+/jp-daily news @半導体        # only the news passage, with a topic hint
+/jp-daily drill --extra      # one more drill today
+/jp-daily --local=5174       # save to the local demo server instead of production
+```
+
+It saves to production (`APP_URL`, `APP_TOKEN` in `.prod.vars`), which needs a release that includes the `/prepared` routes. To run it every morning, see [docs/daily-content.md](docs/daily-content.md): a local scheduled task in the Claude desktop app (recommended), or a cloud routine.
+
 ## Claude mobile app: MCP connector
 
 The Worker serves an MCP server at `/mcp/<MCP_TOKEN>` (Streamable HTTP, stateless) with two tools:
@@ -265,13 +292,15 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | GET / DELETE | `/api/cards/:id` | One card |
 | GET | `/api/practice?limit=` | Recent conversation drills |
 | POST | `/api/practice` | `{ kind?: "work" \| "life" }` → starts a drill; streams over SSE, ending with a `session` event |
-| GET | `/api/practice/:id` | One drill with its turns |
+| POST | `/api/practice/prepared` | `{ date, slot, source?, kind, theme, scenario }` saves an already-written drill without calling the AI (used by `/jp-daily`). 201 when saved; 200 with the existing drill when `source` + `date` + `slot` was saved before |
+| GET | `/api/practice/:id` | One drill with its turns. Opening a prepared drill takes it out of the 今日 queue; `?peek=1` doesn't |
 | POST | `/api/practice/:id/turns` | `{ text }` → correction and the next line; streams over SSE, ending with a `turn` event |
 | POST | `/api/practice/turns/:id/card` | Saves that turn's correction as a card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text, reading?, parts? }` → mp3. `reading` (one word) pins reading and dictionary accent; `parts` (`[{ text, reading }]`, a sentence's tokens) pins readings. 501 when `AZURE_SPEECH_KEY` is not set |
 | GET / POST | `/api/reading` | Recent reading passages / `{ kind? }` (`conversation` or `news`; alternates when omitted) → a new passage |
-| GET | `/api/reading/:id` | One passage |
+| POST | `/api/reading/prepared` | `{ date, slot, source?, kind, sourceUrl?, draft }` saves an already-written passage without calling the AI (used by `/jp-daily`). 201 / 200 as for drills |
+| GET | `/api/reading/:id` | One passage. Opening a prepared passage takes it out of the 今日 queue; `?peek=1` doesn't |
 | POST | `/api/reading/:id/cards` | `{ words }` (indexes into the passage's `words`) → saves the misread words as cards |
 | GET | `/api/review/queue?tz=&new=` | Today's review queue: `{ cards, stats }`, due cards first, then new cards. `tz` is the client's UTC offset in minutes (for "today"); `new` is new cards per day (default 20). Each card has `intervals` (ms until due again for ratings 1–4) |
 | GET | `/api/review/count?tz=&new=` | `{ due, new, reviewedToday, streak }` |
