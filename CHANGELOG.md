@@ -6,6 +6,8 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-07
+
 ### Added
 
 - **Dark mode**: the app follows the system light/dark setting (it used to stay white). ☰ → 設定 → 外觀 picks 跟隨系統, 淺色 or 深色, stored on this device. The pitch-accent and 錄音比對 charts, inputs, badges and borders all have dark colours; light mode looks the same as before.
@@ -98,7 +100,8 @@ Phase 1 MVP. Commit `a548a9f`.
 - iOS Shortcuts for the share sheet and screenshots (`docs/ios-shortcuts.md`).
 - Vite + React PWA and a Hono API on Cloudflare Workers with D1 (migration `0000_init`).
 
-[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.2.0...v0.3.0
