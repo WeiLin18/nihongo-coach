@@ -46,7 +46,7 @@ function ReadingHome() {
             <button
               key={k ?? 'auto'}
               onClick={() => setKind(k)}
-              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-white font-semibold shadow' : 'text-gray-500'}`}
+              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-raised font-semibold shadow' : 'text-gray-500'}`}
             >
               {k ? KIND_LABELS[k] : '輪流'}
             </button>

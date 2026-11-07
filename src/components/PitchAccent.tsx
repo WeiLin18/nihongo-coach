@@ -14,7 +14,7 @@ export function PitchAccent({ reading, nucleus }: { reading: string; nucleus: nu
 
   return (
     <div className="inline-flex flex-col items-start">
-      <svg width={width} height={40} viewBox={`0 0 ${width} 40`} className="text-rose-600">
+      <svg width={width} height={40} viewBox={`0 0 ${width} 40`} className="text-rose-600 dark:text-rose-400">
         <polyline points={pts.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="currentColor" strokeWidth={2} />
         {pts.map((p, i) => (
           <circle
@@ -22,7 +22,7 @@ export function PitchAccent({ reading, nucleus }: { reading: string; nucleus: nu
             cx={p.x}
             cy={p.y}
             r={4}
-            fill={i === morae.length ? 'white' : 'currentColor'}
+            fill={i === morae.length ? 'var(--color-page)' : 'currentColor'}
             stroke="currentColor"
             strokeWidth={1.5}
           />

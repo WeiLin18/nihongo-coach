@@ -8,6 +8,7 @@ A personal Japanese-learning PWA: Vite + React front end, Hono Worker on Cloudfl
 - Run `npm run check` before opening a PR. It is what CI runs: lint, `tsc -b` + build, `scripts/check-pitch.ts`, `scripts/check-migrations.ts`.
 - Every user-facing change adds a line under `## [Unreleased]` in `CHANGELOG.md` (Keep a Changelog: Added / Changed / Fixed, with the commit hash when known). This section becomes the GitHub Release notes as written.
 - Keep `README.md` and `README.zh-TW.md` in step when either changes.
+- Colours: dark mode remaps the Tailwind shades the app uses in `src/index.css`, so a `text-gray-500` adapts on its own. Use `bg-page` / `bg-raised` instead of `bg-white`, and add a shade you newly use to that remap (or give it a `dark:` variant).
 - Try UI changes in demo mode (`npm run demo`, port 5174) or `npm run dev` (port 5173); see `.claude/launch.json`.
 
 ## Database

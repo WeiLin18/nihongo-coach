@@ -51,7 +51,7 @@ export function Home() {
           <button
             key={m}
             onClick={() => setMode(m)}
-            className={`rounded-md py-2 text-sm ${mode === m ? 'bg-white font-semibold shadow' : 'text-gray-500'}`}
+            className={`rounded-md py-2 text-sm ${mode === m ? 'bg-raised font-semibold shadow' : 'text-gray-500'}`}
           >
             {MODE_LABELS[m]}
           </button>

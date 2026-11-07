@@ -7,6 +7,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>Nihongo Coach</title>
+    <script>
+      // Set the theme before the first paint; same logic as src/lib/theme.ts.
+      try {
+        var t = localStorage.getItem('nihongo-coach-theme')
+        if (t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches))
+          document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -10,7 +10,7 @@ The app UI and explanations are in Traditional Chinese, written for a Taiwanese 
 
 ## The app in one minute
 
-The app is an iPhone PWA with four tabs. Settings (your token, new cards per day) are in the ☰ menu at the top right.
+The app is an iPhone PWA with four tabs. Settings (your token, new cards per day, light/dark appearance) are in the ☰ menu at the top right. The app follows the system dark mode unless you pick 淺色 or 深色 there (stored per device).
 
 | Tab | What you do there |
 |---|---|

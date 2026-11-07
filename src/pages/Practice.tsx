@@ -172,7 +172,7 @@ export function Practice() {
             <button
               key={k ?? 'auto'}
               onClick={() => setKind(k)}
-              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-white font-semibold shadow' : 'text-gray-500'}`}
+              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-raised font-semibold shadow' : 'text-gray-500'}`}
             >
               {k ? PRACTICE_KIND_LABELS[k] : '隨機'}
             </button>
@@ -188,7 +188,7 @@ export function Practice() {
       {scene && (
         <section className="space-y-1 rounded-xl bg-rose-50/60 p-4 text-sm">
           <div className="flex items-center gap-2">
-            {session && <span className="rounded bg-white px-2 py-0.5 text-xs text-rose-700">{PRACTICE_KIND_LABELS[session.kind]}</span>}
+            {session && <span className="rounded bg-raised px-2 py-0.5 text-xs text-rose-700">{PRACTICE_KIND_LABELS[session.kind]}</span>}
             <h2 className="text-base font-semibold">{scene.title}</h2>
           </div>
           <p>{scene.situation}</p>
@@ -233,7 +233,7 @@ export function Practice() {
 
       {session && !session.done && (
         // Sits right above the bottom nav (py-3 + text-sm + border ≈ 2.8rem).
-        <div className="sticky bottom-[calc(2.8rem+env(safe-area-inset-bottom))] space-y-2 bg-white pt-2 pb-3">
+        <div className="sticky bottom-[calc(2.8rem+env(safe-area-inset-bottom))] space-y-2 bg-page pt-2 pb-3">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

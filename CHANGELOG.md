@@ -8,7 +8,12 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ### Added
 
+- **Dark mode**: the app follows the system light/dark setting (it used to stay white). ☰ → 設定 → 外觀 picks 跟隨系統, 淺色 or 深色, stored on this device. The pitch-accent and 錄音比對 charts, inputs, badges and borders all have dark colours; light mode looks the same as before.
 - [docs/COSTS.md](docs/COSTS.md): measured cost per action and per month, the free-tier and rate limits of each service, and how to cap spending.
+
+### Changed
+
+- On wide screens the bottom tab bar keeps its four tabs within the content width instead of spreading them across the window.
 
 ## [0.4.0] - 2026-11-05
 

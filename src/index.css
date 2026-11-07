@@ -1,10 +1,74 @@
 @import 'tailwindcss';
 
+/* Dark mode follows the `.dark` class on <html>, set by src/lib/theme.ts (and the inline script in index.html). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* The page behind everything, and panels that sit above it (menus, the selected segment). */
+  --color-page: #ffffff;
+  --color-raised: #ffffff;
+}
+
+/*
+ * Dark mode remaps the shades the app uses, so `text-gray-500`, `bg-rose-50` and so on adapt
+ * without a `dark:` class each. Gray is inverted (50 = darkest surface, 600 = lightest text);
+ * 50/100 tints become dark tints; 700 text shades become light ones. gray-900 is only used for
+ * primary buttons with white text, so it stays a mid tone. Using a shade that is not remapped
+ * here (e.g. gray-700/800, blue-50)? Add it here or give it a `dark:` variant.
+ */
+.dark {
+  color-scheme: dark;
+  --color-page: #0f1218;
+  --color-raised: #353d4c;
+
+  --color-gray-50: #161a22;
+  --color-gray-100: #1f242e;
+  --color-gray-200: #2d3441;
+  --color-gray-300: #4a5263;
+  --color-gray-400: #8a93a3;
+  --color-gray-500: #a3abb8;
+  --color-gray-600: #c5cbd4;
+  --color-gray-900: #3b4556;
+
+  --color-rose-50: #3a1621;
+  --color-rose-100: #4d1c2b;
+  --color-rose-300: #9f1239;
+  --color-rose-700: #fda4af;
+  --color-red-50: #3b1619;
+  --color-red-700: #fca5a5;
+  --color-amber-50: #33270f;
+  --color-amber-100: #4a3712;
+  --color-amber-700: #fcd34d;
+  --color-green-50: #11301d;
+  --color-green-700: #86efac;
+  --color-emerald-50: #0e3027;
+  --color-emerald-700: #6ee7b7;
+  --color-sky-50: #0c2a3b;
+  --color-sky-700: #7dd3fc;
+  --color-blue-600: #60a5fa;
+}
+
+@layer base {
+  /* Unstyled borders are currentColor, which is near-black in light mode but would glare in dark. */
+  .dark *,
+  .dark ::before,
+  .dark ::after {
+    border-color: var(--color-gray-200);
+  }
+  .dark ::placeholder {
+    color: var(--color-gray-400);
+  }
+}
+
 html {
   -webkit-text-size-adjust: 100%;
+  background: var(--color-page);
 }
 body {
-  background: white;
+  background: var(--color-page);
   color: #111827;
   font-family: system-ui, -apple-system, 'Hiragino Sans', 'PingFang TC', sans-serif;
+}
+.dark body {
+  color: #e5e7eb;
 }
