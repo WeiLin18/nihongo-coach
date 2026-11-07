@@ -55,7 +55,7 @@ function ReadingHome() {
             <button
               key={k ?? 'auto'}
               onClick={() => setKind(k)}
-              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-white font-semibold shadow' : 'text-gray-500'}`}
+              className={`rounded-md py-2 text-sm ${kind === k ? 'bg-raised font-semibold shadow' : 'text-gray-500'}`}
             >
               {k ? KIND_LABELS[k] : '輪流'}
             </button>
@@ -74,7 +74,7 @@ function ReadingHome() {
             <Link key={p.id} to={`/reading/${p.id}`} className="block rounded-xl bg-rose-50/60 p-3 active:bg-rose-100">
               <span className="flex items-center gap-2">
                 <TodayBadge />
-                <span className="rounded bg-white px-1.5 py-0.5 text-xs text-rose-700">{KIND_LABELS[p.kind]}</span>
+                <span className="rounded bg-raised px-1.5 py-0.5 text-xs text-rose-700">{KIND_LABELS[p.kind]}</span>
                 <span className="min-w-0 flex-1 truncate font-semibold">{p.title}</span>
               </span>
               <span className="mt-1 block text-sm text-gray-600">{p.topic}</span>

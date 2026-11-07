@@ -153,7 +153,7 @@ function ReviewItem({ card, busy, onRate }: { card: ReviewCard; busy: boolean; o
           <div className="rounded-xl border p-4">
             <CardView card={card} />
           </div>
-          <div className="sticky bottom-[calc(3rem+env(safe-area-inset-bottom))] grid grid-cols-4 gap-2 bg-white/95 py-2 backdrop-blur">
+          <div className="sticky bottom-[calc(3rem+env(safe-area-inset-bottom))] grid grid-cols-4 gap-2 bg-page/95 py-2 backdrop-blur">
             {RATINGS.map((r) => (
               <button
                 key={r.rating}

@@ -48,20 +48,22 @@ function BottomNav() {
     if (section) rememberPracticeSection(section)
   }, [section])
   return (
-    <nav className="fixed inset-x-0 bottom-0 flex border-t bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-      <NavLink to="/" end className={tab}>
-        查詢
-      </NavLink>
-      <NavLink to={section ?? lastPracticeSection()} className={() => tab({ isActive: !!section })}>
-        練習
-      </NavLink>
-      <NavLink to="/review" className={tab}>
-        複習
-        <DueBadge />
-      </NavLink>
-      <NavLink to="/cards" className={tab}>
-        卡片
-      </NavLink>
+    <nav className="fixed inset-x-0 bottom-0 border-t bg-page/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+      <div className="mx-auto flex max-w-xl">
+        <NavLink to="/" end className={tab}>
+          查詢
+        </NavLink>
+        <NavLink to={section ?? lastPracticeSection()} className={() => tab({ isActive: !!section })}>
+          練習
+        </NavLink>
+        <NavLink to="/review" className={tab}>
+          複習
+          <DueBadge />
+        </NavLink>
+        <NavLink to="/cards" className={tab}>
+          卡片
+        </NavLink>
+      </div>
     </nav>
   )
 }

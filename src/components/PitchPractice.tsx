@@ -107,7 +107,7 @@ export function PitchComparison({
       <div className="overflow-x-auto">
         <svg width={width} height={H} viewBox={`0 0 ${width} ${H}`} className="rounded bg-gray-50">
           {labels.map((_, i) => (
-            <line key={i} x1={CELL * i} x2={CELL * i} y1={0} y2={H} stroke="#e5e7eb" />
+            <line key={i} x1={CELL * i} x2={CELL * i} y1={0} y2={H} stroke="var(--color-gray-200)" />
           ))}
           {expected.map((high, i) => (
             <line
@@ -116,14 +116,14 @@ export function PitchComparison({
               x2={CELL * (i + 1) - 4}
               y1={y(high ? fitted.high : fitted.low)}
               y2={y(high ? fitted.high : fitted.low)}
-              stroke="#9ca3af"
+              stroke="var(--color-gray-400)"
               strokeWidth={8}
               strokeLinecap="round"
               opacity={0.45}
             />
           ))}
           {expectedDrop !== null && (
-            <g className="text-rose-600">
+            <g className="text-rose-600 dark:text-rose-400">
               <line
                 x1={CELL * expectedDrop}
                 x2={CELL * expectedDrop}
@@ -140,13 +140,13 @@ export function PitchComparison({
           )}
           {reference &&
             segments(reference, width).map((pts, i) => (
-              <polyline key={`r${i}`} points={pts} fill="none" stroke="#6b7280" strokeWidth={1.5} strokeDasharray="3 2" />
+              <polyline key={`r${i}`} points={pts} fill="none" stroke="var(--color-gray-500)" strokeWidth={1.5} strokeDasharray="3 2" />
             ))}
           {segments(result.contour, width).map((pts, i) => (
-            <polyline key={i} points={pts} fill="none" stroke="#2563eb" strokeWidth={2} strokeLinejoin="round" />
+            <polyline key={i} points={pts} fill="none" stroke="var(--color-blue-600)" strokeWidth={2} strokeLinejoin="round" />
           ))}
           {moraSt.map((st, i) =>
-            st === null ? null : <circle key={i} cx={CELL * i + CELL / 2} cy={y(st)} r={3.5} fill="#2563eb" />,
+            st === null ? null : <circle key={i} cx={CELL * i + CELL / 2} cy={y(st)} r={3.5} fill="var(--color-blue-600)" />,
           )}
         </svg>
         <div className="flex text-lg">

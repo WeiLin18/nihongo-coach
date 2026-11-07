@@ -35,7 +35,7 @@ export function AppMenu() {
           ☰
         </button>
         {open && (
-          <nav className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+          <nav className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-gray-200 bg-raised py-1 shadow-lg">
             <Link to="/settings" className="block px-4 py-2.5 text-sm active:bg-gray-100">
               ⚙️ 設定
             </Link>
