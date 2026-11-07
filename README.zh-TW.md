@@ -79,6 +79,7 @@ iPhone PWA，底下四個分頁。設定（token、每天新卡片數）在右�
 - 大約 3–4 來回，最後簡短總結，附上值得記的說法。
 - 按 **＋ 存成卡片** 會把修正存成一般的「幫我改」卡片（source `practice`），附重音，之後會出現在卡片列表與複習裡。
 - 情境混合工作（進度報告、確認規格、請人 review、排優先順序、上線討論、E2E 測試掛掉…）與生活（購物、餐廳、住處、興趣…），一週大約 4 工作 3 生活。主題會輪替，最近練過的題目會帶進 prompt 避免重複；也可以自己選「工作」或「生活」。
+- [`/jp-daily`](#每天自動備題jp-daily-skill) 備好的題目排在最前面，標上「今日」。
 
 Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangler.jsonc` 的 `OPENAI_MODEL_PRACTICE` 設定。
 
@@ -90,7 +91,7 @@ Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangle
 2. 按「顯示讀音」：所有漢字詞標上假名、每句附中文翻譯，並列出容易唸錯的字（讀音、意思、為什麼容易唸錯）。每句和每個難字都有 🔊，播放時會指定讀音，所以「重複」不會被唸成じゅうふく。
 3. 在文中或清單點選唸錯的字，一鍵存成卡片（來源 `reading`，例句帶原文句子，重音查字典）。
 
-最近的主題和字存在 D1，下一篇不會重複。不用語音轉文字評分，因為它回傳的是漢字，看不出你怎麼唸。
+[`/jp-daily`](#每天自動備題jp-daily-skill) 備好的短文排在最前面，標上「今日」；新聞短文附改寫來源的連結。最近的主題和字存在 D1，下一篇不會重複。不用語音轉文字評分，因為它回傳的是漢字，看不出你怎麼唸。
 
 ### 複習（開口 SRS）
 
@@ -113,6 +114,7 @@ Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangle
 
 - **從任何 App 一鍵查詞**：iOS 捷徑放進分享選單，選取文字或截圖（自動 OCR）就能查。見 [docs/ios-shortcuts.md](docs/ios-shortcuts.md)。
 - **電腦上走訂閱額度**：Claude Code 的 [`/jp` skill](#電腦上用訂閱額度jp-skill) 直接寫卡片存進 App，不花 API 費用。
+- **每天早上有新題目**：[`/jp-daily` skill](#每天自動備題jp-daily-skill) 備好一篇新聞短文、一篇工作短文和 1–2 題會話，App 裡標上「今日」。
 - **手機 Claude App**：[MCP connector](#手機-claude-appmcp-connector) 讓 Claude 在任何對話裡存卡片。
 
 ## 架構
@@ -230,6 +232,31 @@ ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # 安裝一次，所有專案都能
 
 不加「查／說／改」時會自動判斷。skill 直接讀 `worker/lib/ai.ts` 的提示詞和 `shared/schema.ts` 的格式，跟 App 用同一份規則；網址和 token 從 `.prod.vars` 讀，token 不會印出來。
 
+## 每天自動備題：`/jp-daily` skill
+
+`/jp-daily` 用 Claude Code（訂閱額度）寫好當天的練習並存進 App，早上打開「練習」就有題目：
+
+- **新聞**讀音短文：搜尋今天的日本新聞，用自己的話以 N1 程度改寫成適合朗讀的短文，附原文連結（不照抄原文）
+- **工作**讀音短文：虛構的前端團隊情境（進捗報告、レビュー依頼、仕様確認、リリース相談…）
+- **1–2 題會話**：照一週 4 工作 3 生活的比例，避開最近練過的題目
+
+skill 直接讀 App 自己的 prompt 和 schema（`worker/lib/reading.ts`、`worker/lib/practice.ts`、`shared/`），備好的題目和 App 產生的完全一樣。存檔走 `POST /api/reading/prepared` 和 `POST /api/practice/prepared`，不呼叫 AI。每天每個 slot（`news`、`work`、`drill-1`、`drill-2`）只存一份，同一天跑兩次也不會重複。
+
+App 的「讀音」和「會話」會把今天還沒打開的題目排在最上面，標上 **今日**，按「開始」依序打開（依你選的類型）。都打開過之後，「開始」就跟以前一樣即時出題。會話裡批改你的回答仍然走 OpenAI API。
+
+```bash
+ln -s "$PWD/skills/jp-daily" ~/.claude/skills/jp-daily   # 安裝一次
+```
+
+```
+/jp-daily                    # 今天的全部
+/jp-daily news @半導体        # 只做新聞短文，指定題材
+/jp-daily drill --extra      # 今天再多一題會話
+/jp-daily --local=5174       # 存到本機 demo 伺服器，不是正式環境
+```
+
+預設存到正式環境（`.prod.vars` 的 `APP_URL`、`APP_TOKEN`），需要已部署含 `/prepared` 路由的版本。每天早上自動跑的設定方式見 [docs/daily-content.md](docs/daily-content.md)：Claude 桌面 App 的本機排程（建議），或雲端 routine。
+
 ## 手機 Claude App：MCP connector
 
 Worker 在 `/mcp/<MCP_TOKEN>` 提供一個 MCP server（Streamable HTTP，無狀態），有兩個工具：
@@ -262,13 +289,15 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | GET / DELETE | `/api/cards/:id` | 單張卡片 |
 | GET | `/api/practice?limit=` | 最近的會話練習 |
 | POST | `/api/practice` | `{ kind?: "work" \| "life" }` → 開始一題；SSE 串流，最後是 `session` 事件 |
-| GET | `/api/practice/:id` | 單題與所有回合 |
+| POST | `/api/practice/prepared` | `{ date, slot, source?, kind, theme, scenario }` 直接存一題已寫好的會話（不呼叫 AI，給 `/jp-daily` 用）。新存回 201；同一個 `source` + `date` + `slot` 已存過則回 200 和原本那題 |
+| GET | `/api/practice/:id` | 單題與所有回合。打開備好的題目會把它移出「今日」；加 `?peek=1` 不會 |
 | POST | `/api/practice/:id/turns` | `{ text }` → 修正與對方下一句；SSE 串流，最後是 `turn` 事件 |
 | POST | `/api/practice/turns/:id/card` | 把該回合的修正存成卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text, reading?, parts? }` → mp3。`reading`（單字）指定讀音和字典重音；`parts`（`[{ text, reading }]`，一句的分詞）指定讀音。沒設 `AZURE_SPEECH_KEY` 時回 501 |
 | GET / POST | `/api/reading` | 最近的讀音段落／`{ kind? }`（`conversation` 或 `news`，不填就輪流）→ 新段落 |
-| GET | `/api/reading/:id` | 單一段落 |
+| POST | `/api/reading/prepared` | `{ date, slot, source?, kind, sourceUrl?, draft }` 直接存一篇已寫好的短文（不呼叫 AI，給 `/jp-daily` 用）。201／200 同會話 |
+| GET | `/api/reading/:id` | 單一段落。打開備好的短文會把它移出「今日」；加 `?peek=1` 不會 |
 | POST | `/api/reading/:id/cards` | `{ words }`（段落 `words` 的索引）→ 把唸錯的字存成卡片 |
 | GET | `/api/review/queue?tz=&new=` | 今天的複習佇列：`{ cards, stats }`，到期的在前，接著是新卡片。`tz` 是用戶端的 UTC 時差（分鐘，用來算「今天」）；`new` 是每天新卡片數（預設 20）。每張卡片附 `intervals`（評分 1–4 各自到下次的毫秒數） |
 | GET | `/api/review/count?tz=&new=` | `{ due, new, reviewedToday, streak }` |

@@ -1,4 +1,4 @@
-import type { Passage, PassageKind, SavedWord } from '@shared/reading'
+import type { Passage, PassageKind, PassageSummary, SavedWord } from '@shared/reading'
 import type {
   AskRequest,
   Card,
@@ -108,8 +108,7 @@ export const api = {
   review: async (id: string, rating: ReviewRating): Promise<ReviewStats> =>
     (await request(`/review/${id}?${reviewQuery()}`, json({ rating }))).json(),
   tts: async (req: TtsRequest): Promise<Blob> => (await request('/tts', json(req))).blob(),
-  passages: async (): Promise<Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt'>[]> =>
-    (await request('/reading')).json(),
+  passages: async (): Promise<PassageSummary[]> => (await request('/reading')).json(),
   passage: async (id: string): Promise<Passage> => (await request(`/reading/${id}`)).json(),
   newPassage: async (kind?: PassageKind): Promise<Passage> => (await request('/reading', json({ kind }))).json(),
   saveReadingCards: async (id: string, words: number[]): Promise<SavedWord[]> =>
@@ -130,7 +129,10 @@ export const api = {
 
 export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T
 
-export type PracticeSummary = Pick<PracticeSession, 'id' | 'kind' | 'scenario' | 'done' | 'createdAt'>
+export type PracticeSummary = Pick<
+  PracticeSession,
+  'id' | 'kind' | 'theme' | 'scenario' | 'done' | 'createdAt' | 'source' | 'preparedFor' | 'openedAt'
+> & { dailyKey: string | null }
 
 // Reads a streamJob response (worker/index.ts): onPartial gets the half-written JSON each time
 // more arrives; resolves with the data of the final `event`.

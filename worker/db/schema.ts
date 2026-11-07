@@ -66,6 +66,19 @@ export const accents = sqliteTable(
   (t) => [primaryKey({ columns: [t.surface, t.reading] }), index('accents_reading_idx').on(t.reading)],
 )
 
+// Columns for content written ahead of time (e.g. by the /jp-daily skill) instead of on demand.
+// All null for content generated in the app.
+const prepared = {
+  // Who wrote it, e.g. claude-daily.
+  source: text('source'),
+  // The day it is meant for (YYYY-MM-DD, the learner's local date); shown in the 今日 queue that day.
+  preparedFor: text('prepared_for'),
+  // `${source}:${preparedFor}:${slot}`, unique, so saving the same slot twice keeps one row.
+  dailyKey: text('daily_key'),
+  // First time the learner opened it; prepared items leave the 今日 queue once opened.
+  openedAt: text('opened_at'),
+}
+
 // Kanji reading passages, kept so recent topics and words are not repeated.
 export const passages = sqliteTable(
   'passages',
@@ -75,8 +88,11 @@ export const passages = sqliteTable(
     topic: text('topic').notNull(),
     draft: text('draft', { mode: 'json' }).$type<PassageDraft>().notNull(),
     createdAt: text('created_at').notNull(),
+    ...prepared,
+    // Link to the news article a prepared passage was rewritten from.
+    sourceUrl: text('source_url'),
   },
-  (t) => [index('passages_created_idx').on(t.createdAt)],
+  (t) => [index('passages_created_idx').on(t.createdAt), uniqueIndex('passages_daily_key_idx').on(t.dailyKey)],
 )
 
 // Conversation practice: one row per drill, one per learner reply.
@@ -90,8 +106,9 @@ export const practiceSessions = sqliteTable(
     scenario: text('scenario', { mode: 'json' }).$type<PracticeScenario>().notNull(),
     done: integer('done', { mode: 'boolean' }).notNull().default(false),
     createdAt: text('created_at').notNull(),
+    ...prepared,
   },
-  (t) => [index('practice_sessions_created_idx').on(t.createdAt)],
+  (t) => [index('practice_sessions_created_idx').on(t.createdAt), uniqueIndex('practice_sessions_daily_key_idx').on(t.dailyKey)],
 )
 
 export const practiceTurns = sqliteTable(
