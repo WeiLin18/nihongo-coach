@@ -4,7 +4,7 @@
 
 A Japanese speaking coach for daily life in Japan. Japanese you don't understand, something you want to say but can't, or something you said that felt off: send it in and it becomes a flashcard. Then practise speaking with drills, reading passages and spoken review.
 
-**Version 0.4.0** · [Changelog](CHANGELOG.md) · [How releases work](docs/RELEASING.md)
+**Version 0.5.0** · [Changelog](CHANGELOG.md) · [How releases work](docs/RELEASING.md)
 
 The app UI and explanations are in Traditional Chinese, written for a Taiwanese front-end engineer around JLPT N1. The prompts are in [worker/lib/ai.ts](worker/lib/ai.ts) if you want to adapt them.
 
