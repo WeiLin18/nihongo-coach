@@ -9,6 +9,9 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 ### Added
 
 - [docs/COSTS.md](docs/COSTS.md): measured cost per action and per month, the free-tier and rate limits of each service, and how to cap spending.
+- **ChatGPT**: Project instructions for spoken drills in voice mode, and a ChatGPT Sites prompt for a private plugin that saves the corrections as cards through the MCP server. See [integrations/chatgpt/README.md](integrations/chatgpt/README.md).
+- `/jp` works in Codex too (`$jp`, linked into `~/.agents/skills/jp`); its cards are tagged `codex`.
+- The MCP server takes `?source=chatgpt` so cards saved from ChatGPT are tagged `chatgpt`.
 
 ## [0.4.0] - 2026-11-05
 
