@@ -6,6 +6,8 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-13
+
 ### Added
 
 - **讀音 read status and archive**: revealing the readings marks a passage 已讀 (read), and 封存 (archive) hides it from the list without deleting it. The list has 全部 / 未讀 / 已讀 / 封存 filters with counts, a ⋯ menu per row (mark read or unread, archive), 全部封存 under 已讀, 取消封存 under 封存, and a 復原 (undo) toast. A passage has 封存並換一篇 after the readings are shown. The 今日 queue leaves out read and archived passages. New `PATCH /api/reading/:id` and `POST /api/reading/archive-read`; `GET /api/reading` takes `?status=` and `?limit=` and by default leaves out archived passages. Migration `0006_passage_read_archive` adds `read_at` and `archived_at` to `passages`. (fd5ee57)
@@ -108,7 +110,8 @@ Phase 1 MVP. Commit `a548a9f`.
 - iOS Shortcuts for the share sheet and screenshots (`docs/ios-shortcuts.md`).
 - Vite + React PWA and a Hono API on Cloudflare Workers with D1 (migration `0000_init`).
 
-[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.3.0...v0.4.0
