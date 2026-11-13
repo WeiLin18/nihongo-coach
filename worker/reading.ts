@@ -1,11 +1,28 @@
 import { Hono } from 'hono'
-import { ReadingRequest, SavePassageRequest, SaveReadingCardsRequest } from '../shared/reading'
-import { generatePassage, getPassage, listPassages, markPassageOpened, savePreparedPassage, saveReadingCards } from './lib/reading'
+import { PassageListQuery, ReadingRequest, SavePassageRequest, SaveReadingCardsRequest, UpdatePassageRequest } from '../shared/reading'
+import {
+  archiveReadPassages,
+  generatePassage,
+  getPassage,
+  listPassages,
+  markPassageOpened,
+  savePreparedPassage,
+  saveReadingCards,
+  updatePassageState,
+} from './lib/reading'
 
 // Kanji reading practice, mounted at /api/reading (auth and errors are handled by the parent app).
 export const reading = new Hono<{ Bindings: Env }>()
 
-reading.get('/', async (c) => c.json(await listPassages(c.env)))
+// ?status=unread|read|archived|all (omitted: everything but archived), ?limit= (default 50).
+reading.get('/', async (c) => {
+  const parsed = PassageListQuery.safeParse(c.req.query())
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  return c.json(await listPassages(c.env, parsed.data.status, parsed.data.limit))
+})
+
+// Archives every read passage at once; returns the ids archived.
+reading.post('/archive-read', async (c) => c.json({ ids: await archiveReadPassages(c.env) }))
 
 reading.post('/', async (c) => {
   const parsed = ReadingRequest.safeParse(await c.req.json().catch(() => ({})))
@@ -38,4 +55,13 @@ reading.post('/:id/cards', async (c) => {
   const passage = await getPassage(c.env, c.req.param('id'))
   if (!passage) return c.json({ error: 'not found' }, 404)
   return c.json(await saveReadingCards(c.env, passage, parsed.data.words))
+})
+
+// { read?, archived? } marks the passage read/unread and archived/unarchived.
+reading.patch('/:id', async (c) => {
+  const parsed = UpdatePassageRequest.safeParse(await c.req.json().catch(() => null))
+  if (!parsed.success) return c.json({ error: parsed.error.issues }, 400)
+  const state = await updatePassageState(c.env, c.req.param('id'), parsed.data)
+  if (!state) return c.json({ error: 'not found' }, 404)
+  return c.json(state)
 })

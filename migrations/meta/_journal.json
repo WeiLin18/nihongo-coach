@@ -43,6 +43,13 @@
       "when": 1794019454242,
       "tag": "0005_prepared_content",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794530617299,
+      "tag": "0006_passage_read_archive",
+      "breakpoints": true
     }
   ]
 }

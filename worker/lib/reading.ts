@@ -1,7 +1,17 @@
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNotNull, isNull, sql, type SQL } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { zodTextFormat } from 'openai/helpers/zod'
-import { PassageDraft, type Passage, type PassageKind, type PassageSummary, type SavedWord, type SavePassageRequest } from '../../shared/reading'
+import {
+  PassageDraft,
+  type Passage,
+  type PassageKind,
+  type PassageState,
+  type PassageStatus,
+  type PassageSummary,
+  type SavedWord,
+  type SavePassageRequest,
+  type UpdatePassageRequest,
+} from '../../shared/reading'
 import type { CardDraft } from '../../shared/schema'
 import { cards, passages } from '../db/schema'
 import { parseStructured } from './ai'
@@ -75,7 +85,7 @@ export async function generatePassage(env: Env, requested?: PassageKind): Promis
   return { ...toPassage(row), saved: [] }
 }
 
-const NOT_PREPARED = { source: null, preparedFor: null, dailyKey: null, openedAt: null, sourceUrl: null }
+const NOT_PREPARED = { source: null, preparedFor: null, dailyKey: null, openedAt: null, sourceUrl: null, readAt: null, archivedAt: null }
 
 // Saves a passage written elsewhere (the /jp-daily skill), so no API call is made here.
 // The same source + date + slot is saved once: a second save returns the first passage.
@@ -95,6 +105,8 @@ export async function savePreparedPassage(env: Env, req: SavePassageRequest): Pr
       dailyKey,
       openedAt: null,
       sourceUrl: req.sourceUrl ?? null,
+      readAt: null,
+      archivedAt: null,
     })
     .onConflictDoNothing({ target: passages.dailyKey })
     .returning({ id: passages.id })
@@ -138,6 +150,8 @@ const toPassage = (r: typeof passages.$inferSelect): Omit<Passage, 'saved'> => (
   preparedFor: r.preparedFor,
   openedAt: r.openedAt,
   sourceUrl: r.sourceUrl,
+  readAt: r.readAt,
+  archivedAt: r.archivedAt,
 })
 
 // Words of the passage that already have a reading card, matched by dictionary form.
@@ -159,19 +173,61 @@ export async function getPassage(env: Env, id: string): Promise<Passage | null> 
   return { ...passage, saved: await savedWords(env, passage.words) }
 }
 
-export async function listPassages(env: Env, limit = 20): Promise<PassageSummary[]> {
-  const rows = await drizzle(env.DB).select().from(passages).orderBy(desc(passages.createdAt)).limit(limit)
-  return rows.map(({ id, kind, topic, draft, createdAt, source, preparedFor, openedAt, dailyKey }) => ({
-    id,
-    kind,
-    topic,
-    title: draft.title,
-    createdAt,
-    source,
-    preparedFor,
-    openedAt,
-    dailyKey,
-  }))
+const STATUS_FILTERS: Record<PassageStatus | 'default', SQL | undefined> = {
+  default: isNull(passages.archivedAt),
+  unread: and(isNull(passages.readAt), isNull(passages.archivedAt)),
+  read: and(isNotNull(passages.readAt), isNull(passages.archivedAt)),
+  archived: isNotNull(passages.archivedAt),
+  all: undefined,
+}
+
+// Newest first. Without a status, archived passages are left out.
+export async function listPassages(env: Env, status?: PassageStatus, limit = 50): Promise<PassageSummary[]> {
+  return drizzle(env.DB)
+    .select({
+      id: passages.id,
+      kind: passages.kind,
+      topic: passages.topic,
+      // Only the title of the draft, so the list does not carry every passage's full text.
+      title: sql<string>`json_extract(${passages.draft}, '$.title')`,
+      createdAt: passages.createdAt,
+      source: passages.source,
+      preparedFor: passages.preparedFor,
+      openedAt: passages.openedAt,
+      dailyKey: passages.dailyKey,
+      readAt: passages.readAt,
+      archivedAt: passages.archivedAt,
+    })
+    .from(passages)
+    .where(STATUS_FILTERS[status ?? 'default'])
+    .orderBy(desc(passages.createdAt))
+    .limit(limit)
+}
+
+// Marks a passage read/unread and archived/unarchived. Setting a flag that is already set keeps its first time.
+export async function updatePassageState(env: Env, id: string, req: UpdatePassageRequest): Promise<PassageState | null> {
+  const now = new Date().toISOString()
+  const set: { readAt?: SQL | null; archivedAt?: SQL | null } = {}
+  if (req.read !== undefined) set.readAt = req.read ? sql`coalesce(${passages.readAt}, ${now})` : null
+  if (req.archived !== undefined) set.archivedAt = req.archived ? sql`coalesce(${passages.archivedAt}, ${now})` : null
+  return (
+    (await drizzle(env.DB)
+      .update(passages)
+      .set(set)
+      .where(eq(passages.id, id))
+      .returning({ readAt: passages.readAt, archivedAt: passages.archivedAt })
+      .get()) ?? null
+  )
+}
+
+// Archives every read passage that is not archived yet; returns their ids (so the app can undo).
+export async function archiveReadPassages(env: Env): Promise<string[]> {
+  const rows = await drizzle(env.DB)
+    .update(passages)
+    .set({ archivedAt: new Date().toISOString() })
+    .where(and(isNotNull(passages.readAt), isNull(passages.archivedAt)))
+    .returning({ id: passages.id })
+  return rows.map((r) => r.id)
 }
 
 // Turns misread words into lookup cards, with the passage sentence as the first example.

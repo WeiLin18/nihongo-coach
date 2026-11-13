@@ -91,6 +91,10 @@ export const passages = sqliteTable(
     ...prepared,
     // Link to the news article a prepared passage was rewritten from.
     sourceUrl: text('source_url'),
+    // When the learner revealed the readings (or marked it read by hand); null = unread.
+    readAt: text('read_at'),
+    // When the learner archived it; archived passages leave the main list but still count as recent topics.
+    archivedAt: text('archived_at'),
   },
   (t) => [index('passages_created_idx').on(t.createdAt), uniqueIndex('passages_daily_key_idx').on(t.dailyKey)],
 )

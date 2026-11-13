@@ -49,7 +49,7 @@ TOKEN=$(grep '^APP_TOKEN=' "$REPO/.prod.vars" | cut -d= -f2-)      # --local: "$
 ## 3. See what exists
 
 ```bash
-curl -sS "$APP_URL/api/reading" -H "Authorization: Bearer $TOKEN"
+curl -sS "$APP_URL/api/reading?status=all" -H "Authorization: Bearer $TOKEN"
 curl -sS "$APP_URL/api/practice?limit=20" -H "Authorization: Bearer $TOKEN"
 ```
 

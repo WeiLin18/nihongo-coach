@@ -90,6 +90,9 @@ A short passage, alternating between a dialogue (對話) and a news-style report
 1. Read it aloud with no furigana. You can record yourself and play it back; the audio stays on the phone.
 2. Tap **顯示讀音** (show readings): every kanji word gets furigana, each sentence gets a Chinese translation, and the tricky words are listed with reading, meaning, and why they're misread. 🔊 plays each sentence and each tricky word with the reading pinned, so 重複 is never read じゅうふく.
 3. Tap the words you got wrong, in the passage or the list, and save them as cards in one tap (source `reading`, with the passage sentence as an example and dictionary pitch accent).
+4. Revealing the readings marks the passage 已讀 (read). When you're done with it, 封存並換一篇 archives it and opens the list.
+
+The list below has filters: 全部 (everything not archived), 未讀, 已讀 and 封存. Each row's ⋯ menu marks a passage read or unread or archives it; under 已讀, 全部封存 archives every read passage at once. Archiving only hides a passage: 封存 lists them with 取消封存, archived topics still count as recent, and nothing is deleted.
 
 Passages prepared by [`/jp-daily`](#daily-practice-from-your-subscription-the-jp-daily-skill) come first, marked 今日; a news passage links to the article it was rewritten from. Recent topics and words are kept in D1 so the next passage doesn't repeat them. Speech-to-text isn't used to grade, because it writes kanji back and can't tell how you read them.
 
@@ -298,9 +301,11 @@ Every route needs `Authorization: Bearer <APP_TOKEN>`.
 | POST | `/api/practice/turns/:id/card` | Saves that turn's correction as a card |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text, reading?, parts? }` → mp3. `reading` (one word) pins reading and dictionary accent; `parts` (`[{ text, reading }]`, a sentence's tokens) pins readings. 501 when `AZURE_SPEECH_KEY` is not set |
-| GET / POST | `/api/reading` | Recent reading passages / `{ kind? }` (`conversation` or `news`; alternates when omitted) → a new passage |
+| GET / POST | `/api/reading` | Recent reading passages (`?status=unread\|read\|archived\|all`, default: all but archived; `?limit=`, default 50) / `{ kind? }` (`conversation` or `news`; alternates when omitted) → a new passage |
 | POST | `/api/reading/prepared` | `{ date, slot, source?, kind, sourceUrl?, draft }` saves an already-written passage without calling the AI (used by `/jp-daily`). 201 / 200 as for drills |
 | GET | `/api/reading/:id` | One passage. Opening a prepared passage takes it out of the 今日 queue; `?peek=1` doesn't |
+| PATCH | `/api/reading/:id` | `{ read?, archived? }` marks a passage read/unread and archived/unarchived → `{ readAt, archivedAt }` |
+| POST | `/api/reading/archive-read` | Archives every read passage → `{ ids }` |
 | POST | `/api/reading/:id/cards` | `{ words }` (indexes into the passage's `words`) → saves the misread words as cards |
 | GET | `/api/review/queue?tz=&new=` | Today's review queue: `{ cards, stats }`, due cards first, then new cards. `tz` is the client's UTC offset in minutes (for "today"); `new` is new cards per day (default 20). Each card has `intervals` (ms until due again for ratings 1–4) |
 | GET | `/api/review/count?tz=&new=` | `{ due, new, reviewedToday, streak }` |

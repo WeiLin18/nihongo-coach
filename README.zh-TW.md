@@ -90,6 +90,9 @@ Prompt 在 [worker/lib/practice.ts](worker/lib/practice.ts)，模型由 `wrangle
 1. 不看假名先大聲唸一遍。可以錄下來回放，錄音只留在手機上。
 2. 按「顯示讀音」：所有漢字詞標上假名、每句附中文翻譯，並列出容易唸錯的字（讀音、意思、為什麼容易唸錯）。每句和每個難字都有 🔊，播放時會指定讀音，所以「重複」不會被唸成じゅうふく。
 3. 在文中或清單點選唸錯的字，一鍵存成卡片（來源 `reading`，例句帶原文句子，重音查字典）。
+4. 顯示讀音後這篇會自動標成「已讀」。唸完了按「封存並換一篇」，收進封存並回到列表。
+
+下方列表可以篩選：全部（不含封存）、未讀、已讀、封存。每一列的 ⋯ 可以標記已讀／未讀或封存；在「已讀」裡按「全部封存」一次收起所有已讀的短文。封存只是收起來：「封存」裡可以取消封存，封存的主題出題時仍會避開，不會刪掉任何東西。
 
 [`/jp-daily`](#每天自動備題jp-daily-skill) 備好的短文排在最前面，標上「今日」；新聞短文附改寫來源的連結。最近的主題和字存在 D1，下一篇不會重複。不用語音轉文字評分，因為它回傳的是漢字，看不出你怎麼唸。
 
@@ -295,9 +298,11 @@ npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method t
 | POST | `/api/practice/turns/:id/card` | 把該回合的修正存成卡片 |
 | POST | `/api/transcribe` | multipart `audio` → `{ text }` |
 | POST | `/api/tts` | `{ text, reading?, parts? }` → mp3。`reading`（單字）指定讀音和字典重音；`parts`（`[{ text, reading }]`，一句的分詞）指定讀音。沒設 `AZURE_SPEECH_KEY` 時回 501 |
-| GET / POST | `/api/reading` | 最近的讀音段落／`{ kind? }`（`conversation` 或 `news`，不填就輪流）→ 新段落 |
+| GET / POST | `/api/reading` | 最近的讀音段落（`?status=unread\|read\|archived\|all`，預設不含封存；`?limit=`，預設 50）／`{ kind? }`（`conversation` 或 `news`，不填就輪流）→ 新段落 |
 | POST | `/api/reading/prepared` | `{ date, slot, source?, kind, sourceUrl?, draft }` 直接存一篇已寫好的短文（不呼叫 AI，給 `/jp-daily` 用）。201／200 同會話 |
 | GET | `/api/reading/:id` | 單一段落。打開備好的短文會把它移出「今日」；加 `?peek=1` 不會 |
+| PATCH | `/api/reading/:id` | `{ read?, archived? }` 標記已讀／未讀、封存／取消封存 → `{ readAt, archivedAt }` |
+| POST | `/api/reading/archive-read` | 封存所有已讀的段落 → `{ ids }` |
 | POST | `/api/reading/:id/cards` | `{ words }`（段落 `words` 的索引）→ 把唸錯的字存成卡片 |
 | GET | `/api/review/queue?tz=&new=` | 今天的複習佇列：`{ cards, stats }`，到期的在前，接著是新卡片。`tz` 是用戶端的 UTC 時差（分鐘，用來算「今天」）；`new` 是每天新卡片數（預設 20）。每張卡片附 `intervals`（評分 1–4 各自到下次的毫秒數） |
 | GET | `/api/review/count?tz=&new=` | `{ due, new, reviewedToday, streak }` |

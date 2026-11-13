@@ -66,11 +66,31 @@ export type Passage = PassageDraft &
     // The news article a prepared passage was rewritten from.
     sourceUrl: string | null
     saved: SavedWord[]
-  }
+  } & PassageState
 
-export type PassageSummary = Pick<Passage, 'id' | 'kind' | 'title' | 'topic' | 'createdAt' | 'source' | 'preparedFor' | 'openedAt'> & {
+// Read when the readings were revealed (or marked by hand); archived passages leave the main list.
+// Both can be set at once.
+export type PassageState = { readAt: string | null; archivedAt: string | null }
+
+export type PassageSummary = Pick<
+  Passage,
+  'id' | 'kind' | 'title' | 'topic' | 'createdAt' | 'source' | 'preparedFor' | 'openedAt' | 'readAt' | 'archivedAt'
+> & {
   dailyKey: string | null
 }
+
+// GET /api/reading?status=… — omitted: everything except archived passages.
+export const PASSAGE_STATUSES = ['unread', 'read', 'archived', 'all'] as const
+export type PassageStatus = (typeof PASSAGE_STATUSES)[number]
+export const PassageListQuery = z.object({
+  status: z.enum(PASSAGE_STATUSES).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(50),
+})
+
+export const UpdatePassageRequest = z
+  .object({ read: z.boolean().optional(), archived: z.boolean().optional() })
+  .refine((r) => r.read !== undefined || r.archived !== undefined, 'read or archived is required')
+export type UpdatePassageRequest = z.infer<typeof UpdatePassageRequest>
 
 // A passage someone else already wrote, saved without calling the AI.
 export const SavePassageRequest = z.object({
