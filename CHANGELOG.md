@@ -30,6 +30,9 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 - **今日 queue and the `/jp-daily` skill**: `/jp-daily` writes the day's practice in Claude Code on the subscription (a news reading passage rewritten from today's Japanese news with a source link, a work-report passage, and 1–2 會話 drills) and saves it with the new `POST /api/reading/prepared` and `POST /api/practice/prepared`, which validate with the same schemas as generated content and call no AI. Saves are idempotent per `source` + `date` + `slot`. 練習 → 讀音 and 會話 list today's unopened items first with a 今日 label, and 開始 opens them before generating on demand. Migration `0005_prepared_content` adds `source`, `prepared_for`, `daily_key`, `opened_at` (and `source_url` on passages). Scheduling: [docs/daily-content.md](docs/daily-content.md).
 - [docs/COSTS.md](docs/COSTS.md): measured cost per action and per month, the free-tier and rate limits of each service, and how to cap spending.
+- **ChatGPT**: Project instructions for spoken drills in voice mode, and a ChatGPT Sites prompt for a private plugin that saves the corrections as cards through the MCP server. See [integrations/chatgpt/README.md](integrations/chatgpt/README.md).
+- `/jp` works in Codex too (`$jp`, linked into `~/.agents/skills/jp`); its cards are tagged `codex`.
+- The MCP server takes `?source=chatgpt` so cards saved from ChatGPT are tagged `chatgpt`.
 
 ## [0.4.0] - 2026-11-05
 

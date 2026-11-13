@@ -1,6 +1,6 @@
 ---
 name: jp
-description: Japanese speaking coach that saves a card to the user's Nihongo Coach app. Use when the user types /jp, or asks how to say something in Japanese, what a Japanese word or grammar means, or whether their Japanese sounds natural.
+description: Japanese speaking coach that saves a card to the user's Nihongo Coach app. Use when the user types /jp or $jp, or asks how to say something in Japanese, what a Japanese word or grammar means, or whether their Japanese sounds natural.
 argument-hint: "[查|說|改] <text> [@情境]"
 allowed-tools: Read, Bash(curl:*), Bash(grep:*), Bash(realpath:*)
 ---
@@ -8,20 +8,21 @@ allowed-tools: Read, Bash(curl:*), Bash(grep:*), Bash(realpath:*)
 # /jp — Nihongo Coach card
 
 Make the same card the Nihongo Coach app makes, using this session instead of the app's API,
-and save it to the app so it shows up on the phone.
+and save it to the app so it shows up on the phone. The same file serves Claude Code and Codex.
 
 The project folder is two levels above this skill's real location (`skills/jp` inside the repo,
-usually linked into `~/.claude/skills/jp`). Find it once per session:
+usually linked into `~/.claude/skills/jp` for Claude Code and `~/.agents/skills/jp` for Codex). Find it once per session:
 
 ```bash
 realpath "<this skill's base directory>/../.."
 ```
 
 The deployed app URL and token live in the project's `.prod.vars` (`APP_URL`, `APP_TOKEN`); see `.prod.vars.example`.
+Only if the user asks to save to the local dev server: read `APP_TOKEN` from `.dev.vars` instead and use `APP_URL=http://localhost:5173`.
 
 ## 1. Pick the mode
 
-From `$ARGUMENTS`:
+From the user's text (`$ARGUMENTS` in Claude Code; in Codex, the rest of the message after `$jp`):
 - Starts with `查` → `lookup`; `說` → `zh2ja`; `改` → `naturalize`. Strip the prefix.
 - No prefix: mostly Chinese → `zh2ja`; a Japanese word, phrase, or grammar pattern → `lookup`;
   a full Japanese sentence the user wrote → `naturalize`.
@@ -48,10 +49,11 @@ TOKEN=$(grep '^APP_TOKEN=' "$REPO/.prod.vars" | cut -d= -f2-)
 curl -sS -X POST "$APP_URL/api/cards?format=text" \
   -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   --data-binary @- <<'CARD_JSON'
-{"mode": "<mode>", "input": "<the user's original text>", "source": "claude-code", "draft": { ...CardDraft... }}
+{"mode": "<mode>", "input": "<the user's original text>", "source": "<claude-code or codex>", "draft": { ...CardDraft... }}
 CARD_JSON
 ```
 
+- `source` is `claude-code` in Claude Code and `codex` in Codex.
 - Success returns the card as plain text: show it to the user as is.
 - `400` lists the invalid fields: fix them and send once more.
 - `401`: the token in `.prod.vars` no longer matches the deployed one; tell the user.
