@@ -1,4 +1,4 @@
-import type { Passage, PassageKind, PassageSummary, SavedWord } from '@shared/reading'
+import type { Passage, PassageKind, PassageState, PassageSummary, SavedWord, UpdatePassageRequest } from '@shared/reading'
 import type {
   AskRequest,
   Card,
@@ -76,8 +76,8 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
   return res
 }
 
-const json = (body: unknown): RequestInit => ({
-  method: 'POST',
+const json = (body: unknown, method = 'POST'): RequestInit => ({
+  method,
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(body),
 })
@@ -108,7 +108,11 @@ export const api = {
   review: async (id: string, rating: ReviewRating): Promise<ReviewStats> =>
     (await request(`/review/${id}?${reviewQuery()}`, json({ rating }))).json(),
   tts: async (req: TtsRequest): Promise<Blob> => (await request('/tts', json(req))).blob(),
-  passages: async (): Promise<PassageSummary[]> => (await request('/reading')).json(),
+  // Every passage, archived ones too: the 讀音 list filters and counts them on the device.
+  passages: async (): Promise<PassageSummary[]> => (await request('/reading?status=all&limit=500')).json(),
+  updatePassage: async (id: string, req: UpdatePassageRequest): Promise<PassageState> =>
+    (await request(`/reading/${id}`, json(req, 'PATCH'))).json(),
+  archiveReadPassages: async (): Promise<string[]> => (await (await request('/reading/archive-read', { method: 'POST' })).json()).ids,
   passage: async (id: string): Promise<Passage> => (await request(`/reading/${id}`)).json(),
   newPassage: async (kind?: PassageKind): Promise<Passage> => (await request('/reading', json({ kind }))).json(),
   saveReadingCards: async (id: string, words: number[]): Promise<SavedWord[]> =>
