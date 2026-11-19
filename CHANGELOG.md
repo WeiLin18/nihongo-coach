@@ -6,6 +6,8 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-19
+
 ### Fixed
 
 - **幫我改 notes in the wrong language**: the correction note (`correction.why`) sometimes came back in Japanese or Korean instead of Traditional Chinese. The prompt and the JSON-schema field descriptions now name the language for every explanation field, and the server checks card, 會話練習 and 讀音 explanations: if one is in Korean, Japanese prose or English, it retries once (a streamed answer restarts with a new `reset` event) and logs it. (885c65f)
@@ -114,7 +116,8 @@ Phase 1 MVP. Commit `a548a9f`.
 - iOS Shortcuts for the share sheet and screenshots (`docs/ios-shortcuts.md`).
 - Vite + React PWA and a Hono API on Cloudflare Workers with D1 (migration `0000_init`).
 
-[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/WeiLin18/nihongo-coach/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/WeiLin18/nihongo-coach/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/WeiLin18/nihongo-coach/compare/v0.4.0...v0.5.0
