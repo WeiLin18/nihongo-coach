@@ -50,12 +50,16 @@ type ToolResult = { content: { type: 'text'; text: string }[]; isError?: boolean
 
 const text = (t: string, isError = false): ToolResult => ({ content: [{ type: 'text', text: t }], ...(isError && { isError }) })
 
-async function callTool(env: Env, name: string, args: unknown): Promise<ToolResult> {
+// Which client saved the card. Default is the Claude apps; the ChatGPT Sites proxy adds ?source=chatgpt.
+const SOURCES = ['claude-app', 'chatgpt'] as const
+type Source = (typeof SOURCES)[number]
+
+async function callTool(env: Env, source: Source, name: string, args: unknown): Promise<ToolResult> {
   if (name === 'save_card') {
     const parsed = SaveCardArgs.safeParse(args)
     // Hand validation errors back to the model so it can fix the card and retry.
     if (!parsed.success) return text(`Invalid card, fix these fields and call again:\n${z.prettifyError(parsed.error)}`, true)
-    return text(cardToText(await saveCard(env, { ...parsed.data, source: 'claude-app' })))
+    return text(cardToText(await saveCard(env, { ...parsed.data, source })))
   }
   if (name === 'list_cards') {
     const parsed = ListCardsArgs.safeParse(args ?? {})
@@ -68,7 +72,7 @@ async function callTool(env: Env, name: string, args: unknown): Promise<ToolResu
   return text(`Unknown tool: ${name}`, true)
 }
 
-async function handle(env: Env, req: RpcRequest) {
+async function handle(env: Env, source: Source, req: RpcRequest) {
   const ok = (result: unknown) => ({ jsonrpc: '2.0', id: req.id, result })
   switch (req.method) {
     case 'initialize':
@@ -83,7 +87,7 @@ async function handle(env: Env, req: RpcRequest) {
     case 'tools/list':
       return ok({ tools: TOOLS })
     case 'tools/call':
-      return ok(await callTool(env, req.params?.name as string, req.params?.arguments))
+      return ok(await callTool(env, source, req.params?.name as string, req.params?.arguments))
     default:
       return { jsonrpc: '2.0', id: req.id, error: { code: -32601, message: `Method not found: ${req.method}` } }
   }
@@ -100,7 +104,8 @@ mcp.post('/:token', async (c) => {
   const requests = messages.filter((m) => m.id !== undefined && m.id !== null)
   // Notifications (e.g. notifications/initialized) get no response body.
   if (requests.length === 0) return c.body(null, 202)
-  const responses = await Promise.all(requests.map((r) => handle(c.env, r)))
+  const source = SOURCES.find((s) => s === c.req.query('source')) ?? 'claude-app'
+  const responses = await Promise.all(requests.map((r) => handle(c.env, source, r)))
   return c.json(Array.isArray(body) ? responses : responses[0])
 })
 

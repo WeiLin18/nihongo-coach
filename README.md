@@ -221,11 +221,17 @@ On the iPhone, open the deployed URL in Safari → Share → Add to Home Screen.
 
 ## Use your subscription on the computer: the `/jp` skill
 
-In Claude Code, the `/jp` skill makes cards on your subscription instead of the API. They are saved to the app like any other card and show up on the phone.
+In Claude Code or Codex, the `/jp` skill makes cards on your subscription instead of the API. They are saved to the app like any other card and show up on the phone.
 
 ```bash
-ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # install once; works in every project
+ln -s "$PWD/skills/jp" ~/.claude/skills/jp   # Claude Code: install once; works in every project
 ```
+
+```bash
+ln -s "$PWD/skills/jp" ~/.agents/skills/jp   # Codex (CLI and the ChatGPT desktop app): same file
+```
+
+In Codex, call it as `$jp` instead of `/jp`. The first `curl` needs network access: approve it when Codex asks.
 
 In any Claude Code conversation:
 
@@ -235,7 +241,7 @@ In any Claude Code conversation:
 /jp 查 推し活
 ```
 
-`說` is Say it, `改` is Fix it, and `查` is Look up; without one, the mode is picked automatically. Text after `@` is the situation. The skill reads the prompt in `worker/lib/ai.ts` and the schema in `shared/schema.ts`, so it follows the same rules as the app. The URL and token come from `.prod.vars`, and the token is never printed.
+`說` is Say it, `改` is Fix it, and `查` is Look up; without one, the mode is picked automatically. Text after `@` is the situation. The skill reads the prompt in `worker/lib/ai.ts` and the schema in `shared/schema.ts`, so it follows the same rules as the app. The URL and token come from `.prod.vars`, and the token is never printed. Cards are tagged with source `claude-code` or `codex`.
 
 ## Daily practice from your subscription: the `/jp-daily` skill
 
@@ -266,7 +272,7 @@ It saves to production (`APP_URL`, `APP_TOKEN` in `.prod.vars`), which needs a r
 
 The Worker serves an MCP server at `/mcp/<MCP_TOKEN>` (Streamable HTTP, stateless) with two tools:
 
-- `save_card`: Claude writes the card following the app's rules and saves it; the server adds accents (source `claude-app`)
+- `save_card`: Claude writes the card following the app's rules and saves it; the server adds accents (source `claude-app`, or `chatgpt` with `?source=chatgpt`)
 - `list_cards`: reads recently saved cards, optionally filtered by category or text
 
 claude.ai custom connectors only take a URL, so the secret lives in the path; any wrong URL returns 404.
@@ -282,6 +288,15 @@ Test it with [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 ```bash
 npx @modelcontextprotocol/inspector --cli "$MCP_URL" --transport http --method tools/list
 ```
+
+## ChatGPT: voice practice and saving cards
+
+On a personal ChatGPT plan (Plus or Pro), ChatGPT can't call a custom MCP server that writes data, and custom GPTs retire on 2026-12-11. So the setup has two parts:
+
+- A **ChatGPT Project** with [integrations/chatgpt/project-instructions.md](integrations/chatgpt/project-instructions.md) as its instructions, for spoken drills in voice mode. It follows the app's 會話練習 rules and never judges pitch accent.
+- A private **ChatGPT Site** that hosts a small MCP proxy to `/mcp/<MCP_TOKEN>?source=chatgpt`, which ChatGPT turns into a personal plugin. Its build prompt is [integrations/chatgpt/site-prompt.md](integrations/chatgpt/site-prompt.md). `MCP_URL` is stored as a Site secret, not in the repo.
+
+After a drill, send 「存卡」 in a text chat and the corrections are saved as cards with source `chatgpt`. Step-by-step setup (in Chinese): [integrations/chatgpt/README.md](integrations/chatgpt/README.md).
 
 ## API
 
