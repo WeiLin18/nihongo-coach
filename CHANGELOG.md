@@ -6,6 +6,10 @@ How releases are cut and deployed: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## [Unreleased]
 
+### Fixed
+
+- **幫我改 notes in the wrong language**: the correction note (`correction.why`) sometimes came back in Japanese or Korean instead of Traditional Chinese. The prompt and the JSON-schema field descriptions now name the language for every explanation field, and the server checks card, 會話練習 and 讀音 explanations: if one is in Korean, Japanese prose or English, it retries once (a streamed answer restarts with a new `reset` event) and logs it. (885c65f)
+
 ## [0.7.0] - 2026-11-13
 
 ### Added

@@ -30,7 +30,7 @@ import {
   saveTurnCard,
   startPractice,
 } from './lib/practice'
-import { draftCard, RefusalError, streamCard } from './lib/ai'
+import { draftCard, RefusalError, streamCard, type OnDelta } from './lib/ai'
 import { transcribe } from './lib/transcribe'
 import { synthesize } from './lib/tts'
 
@@ -47,10 +47,14 @@ app.onError((err, c) => {
 
 // Server-Sent Events: `delta` events carry raw JSON text as the AI writes it,
 // then one `event` with the job's result, or an `error` event.
-const streamJob = <T>(c: Context, event: string, job: (onDelta: (text: string) => Promise<void>) => Promise<T>) =>
+// A `reset` event means the JSON so far is dropped (the request is being retried).
+const streamJob = <T>(c: Context, event: string, job: (onDelta: OnDelta) => Promise<T>) =>
   streamSSE(c, async (sse) => {
     try {
-      const result = await job((text) => sse.writeSSE({ event: 'delta', data: JSON.stringify(text) }))
+      const result = await job(async (text, restart) => {
+        if (restart) await sse.writeSSE({ event: 'reset', data: 'null' })
+        await sse.writeSSE({ event: 'delta', data: JSON.stringify(text) })
+      })
       await sse.writeSSE({ event, data: JSON.stringify(result) })
     } catch (err) {
       console.error(err)

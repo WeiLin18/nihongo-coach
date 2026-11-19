@@ -78,6 +78,17 @@ export async function generatePassage(env: Env, requested?: PassageKind): Promis
         text: { format: zodTextFormat(PassageDraft, 'passage') },
       },
       PassageDraft,
+      (d) => ({
+        topic: d.topic,
+        ...Object.fromEntries(d.sentences.map((s, i) => [`sentences.${i}.zh`, s.zh])),
+        ...Object.fromEntries(
+          d.words.flatMap((w, i) => [
+            [`words.${i}.zh`, w.zh],
+            [`words.${i}.note`, w.note],
+            [`words.${i}.example.zh`, w.example.zh],
+          ]),
+        ),
+      }),
     ),
   )
   const row = { ...NOT_PREPARED, id: crypto.randomUUID(), kind, topic: draft.topic, draft, createdAt: new Date().toISOString() }

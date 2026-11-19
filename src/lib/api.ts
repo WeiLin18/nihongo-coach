@@ -162,7 +162,8 @@ async function stream<P, T>(path: string, body: unknown, event: string, onPartia
         } catch {
           // not parseable yet; wait for more text
         }
-      } else if (name === event) return data
+      } else if (name === 'reset') text = ''
+      else if (name === event) return data
       else if (name === 'error') throw new Error(data)
     }
   }
