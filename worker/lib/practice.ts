@@ -12,7 +12,7 @@ import {
 } from '../../shared/schema'
 import { stripRuby } from '../../shared/format'
 import { cards, practiceSessions, practiceTurns } from '../db/schema'
-import { draftCard, streamParsed, SYSTEM } from './ai'
+import { draftCard, streamParsed, SYSTEM, type OnDelta } from './ai'
 import { saveCard, toCard } from './cards'
 
 // A drill is the opening line plus this many learner replies at most, then a wrap-up.
@@ -90,7 +90,7 @@ async function pickKind(env: Env): Promise<PracticeKind> {
 export async function startPractice(
   env: Env,
   kindChoice: PracticeKind | undefined,
-  onDelta: (text: string) => Promise<void>,
+  onDelta: OnDelta,
 ): Promise<PracticeSession> {
   const kind = kindChoice ?? (await pickKind(env))
   const recent = await db(env)
@@ -127,6 +127,7 @@ export async function startPractice(
     },
     PracticeScenario,
     onDelta,
+    (s) => ({ title: s.title, situation: s.situation, userRole: s.userRole, partnerRole: s.partnerRole, goal: s.goal, 'partner.zh': s.partner.zh }),
   )
 
   const row = {
@@ -247,7 +248,7 @@ export async function replyPractice(
   env: Env,
   session: PracticeSession,
   text: string,
-  onDelta: (text: string) => Promise<void>,
+  onDelta: OnDelta,
 ): Promise<{ turn: PracticeTurn; done: boolean }> {
   const idx = session.turns.length + 1
   const pacing =
@@ -268,6 +269,7 @@ export async function replyPractice(
     },
     PracticeReply,
     onDelta,
+    (r) => ({ explanation: r.explanation, wrapUp: r.wrapUp, 'partner.zh': r.partner?.zh }),
   )
 
   const done = reply.wrapUp !== null || idx >= MAX_TURNS

@@ -47,18 +47,22 @@ export const TtsRequest = z.object({
 })
 export type TtsRequest = z.infer<typeof TtsRequest>
 
+// Explanation fields are sent as JSON-schema descriptions too, so each one names its language:
+// without that, `correction.why` (generated right after the Japanese `original`) drifted into Japanese or Korean.
+const ZH = 'In Traditional Chinese as used in Taiwan (never Japanese, Korean, English or Simplified Chinese)'
+
 // What Claude returns. Pitch accent is deliberately NOT part of this: LLMs get
 // it wrong too often, so it is filled from the accent dictionary instead.
 export const CardDraft = z.object({
   ja: z.string().describe('The main Japanese expression: the looked-up word, or the natural spoken sentence'),
   reading: z.string().describe('Full reading of `ja` in hiragana'),
-  zh: z.string().describe('Traditional Chinese (Taiwan) meaning'),
+  zh: z.string().describe(`${ZH}: the meaning`),
   en: z.string().describe('English meaning'),
-  nuance: z.string().describe('In Traditional Chinese: when/how to use it, register, nuance, common pitfalls'),
+  nuance: z.string().describe(`${ZH}: when/how to use it, register, nuance, common pitfalls`),
   politeness: z.enum(['casual', 'neutral', 'polite', 'keigo']),
   category: z.enum(CATEGORIES),
   examples: z
-    .array(z.object({ ja: z.string(), reading: z.string(), zh: z.string() }))
+    .array(z.object({ ja: z.string(), reading: z.string(), zh: z.string().describe(`${ZH}: translation of \`ja\``) }))
     .min(2)
     .max(3)
     .describe('2-3 natural spoken example sentences'),
@@ -66,9 +70,12 @@ export const CardDraft = z.object({
     .array(z.object({ surface: z.string(), reading: z.string() }))
     .describe('Key vocabulary in dictionary form with hiragana reading, used for pitch-accent lookup; the head word first'),
   correction: z
-    .object({ original: z.string(), why: z.string() })
+    .object({
+      original: z.string().describe("The learner's original Japanese, unchanged"),
+      why: z.string().describe(`${ZH}, quoting Japanese only for the words in question: why the original sounded unnatural`),
+    })
     .nullable()
-    .describe('naturalize mode only: the learner original and, in Traditional Chinese, why it sounded unnatural; null otherwise'),
+    .describe('naturalize mode only: the learner original and why it sounded unnatural; null otherwise'),
 })
 export type CardDraft = z.infer<typeof CardDraft>
 
